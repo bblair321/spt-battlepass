@@ -1,0 +1,19 @@
+[
+  { "id": "ammo_60", "name": "5.45 PS x60", "tpl": "56dff3afd2720bba668b4567", "count": 60, "ticketValue": 1, "max": 6 },
+  { "id": "ammo_9x19", "name": "9x19 Pst x50", "tpl": "56d59d3ad2720bdb418b4577", "count": 50, "ticketValue": 1, "max": 4 },
+  { "id": "ammo_buck", "name": "12/70 7mm buck x20", "tpl": "560d5e524bdc2d25448b4571", "count": 20, "ticketValue": 1, "max": 4 },
+  { "id": "ammo_762x39", "name": "7.62x39 PS x60", "tpl": "5656d7c34bdc2d9d198b4587", "count": 60, "ticketValue": 2, "max": 3 },
+  { "id": "bandage", "name": "Aseptic bandage x2", "tpl": "544fb25a4bdc2dfb738b4567", "count": 2, "ticketValue": 1, "max": 3 },
+  { "id": "water", "name": "Emergency water", "tpl": "60098b1705871270cd5352a1", "count": 1, "ticketValue": 1, "max": 3 },
+  { "id": "painkillers", "name": "Analgin", "tpl": "544fb37f4bdc2dee738b4567", "count": 1, "ticketValue": 2, "max": 3 },
+  { "id": "bolts", "name": "Bolts x5", "tpl": "57347c5b245977448d35f6e1", "count": 5, "ticketValue": 2, "max": 2 },
+  { "id": "ifak", "name": "IFAK", "tpl": "590c678286f77426c9660122", "count": 1, "ticketValue": 2, "max": 4 },
+  { "id": "iskra", "name": "Iskra ration", "tpl": "590c5d4b86f774784e1b9c45", "count": 1, "ticketValue": 2, "max": 2 },
+  { "id": "salewa", "name": "Salewa", "tpl": "544fb45d4bdc2dee738b4568", "count": 1, "ticketValue": 4, "max": 2 },
+  { "id": "grizzly", "name": "Grizzly", "tpl": "590c657e86f77412b013051d", "count": 1, "ticketValue": 6, "max": 1 },
+  { "id": "hdd", "name": "Damaged hard drive", "tpl": "590a386e86f77429692b27ab", "count": 1, "ticketValue": 10, "max": 1 },
+  { "id": "cms", "name": "CMS", "tpl": "5d02778e86f774203e7dedbe", "count": 1, "ticketValue": 8, "max": 1 },
+  { "id": "ram", "name": "RAM", "tpl": "57347baf24597738002c6178", "count": 1, "ticketValue": 14, "max": 1 },
+  { "id": "cpu", "name": "PC CPU", "tpl": "573477e124597737dd42e191", "count": 1, "ticketValue": 22, "max": 1 },
+  { "id": "gpu", "name": "Graphics card", "tpl": "57347ca924597744596b4e71", "count": 1, "ticketValue": 40, "max": 1 }
+]

@@ -1,0 +1,19 @@
+{
+    "debugGrants": false,
+  "grantAmount": 10,
+  "challengesPerBucket": 3,
+  "monthlyBonus": 5,
+  "dailyRerollCost": 1,
+  "dailyRerollMax": 3,
+  "weeklyRerollCost": 2,
+  "weeklyRerollMax": 1,
+  "xpDaily": 500,
+  "xpWeekly": 1500,
+  "xpMonthly": 4000,
+  "xpMonthlyBonus": 2500,
+  "premiumCostRoubles": 750000,
+  "trackXpDaily": 8,
+  "trackXpWeekly": 25,
+  "trackXpMonthly": 60,
+  "trackXpMonthlyBonus": 40
+}

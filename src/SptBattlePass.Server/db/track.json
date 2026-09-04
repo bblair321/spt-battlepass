@@ -1,0 +1,12 @@
+[
+  { "level": 1, "xp": 50, "free": { "tickets": 1 }, "premium": { "name": "IFAK", "tpl": "590c678286f77426c9660122", "count": 1 } },
+  { "level": 2, "xp": 70, "free": { "name": "Aseptic bandage x4", "tpl": "544fb25a4bdc2dfb738b4567", "count": 4 }, "premium": { "name": "Factory emergency exit key", "tpl": "5448ba0b4bdc2d02308b456c", "count": 1 } },
+  { "level": 3, "xp": 80, "free": { "tickets": 1 }, "premium": { "name": "Analgin x2", "tpl": "544fb37f4bdc2dee738b4567", "count": 2 } },
+  { "level": 4, "xp": 100, "free": { "name": "5.45 PS x60", "tpl": "56dff061d2720bb5668b4567", "count": 60 }, "premium": { "name": "PM (default)", "tpl": "5448bd6b4bdc2dfc2f8b4569", "count": 1, "preset": true } },
+  { "level": 5, "xp": 120, "free": { "tickets": 2 }, "premium": { "name": "Dorm room 118 key", "tpl": "5672c92d4bdc2d180f8b4567", "count": 1 } },
+  { "level": 6, "xp": 140, "free": { "name": "IFAK", "tpl": "590c678286f77426c9660122", "count": 1 }, "premium": { "name": "SKS (default)", "tpl": "574d967124597745970e7c94", "count": 1, "preset": true } },
+  { "level": 7, "xp": 160, "free": { "tickets": 2 }, "premium": { "name": "Damaged hard drive", "tpl": "590a386e86f77429692b27ab", "count": 1 } },
+  { "level": 8, "xp": 180, "free": { "name": "Salewa", "tpl": "544fb45d4bdc2dee738b4568", "count": 1 }, "premium": { "name": "AKS-74U (default)", "tpl": "57dc2fa62459775949412633", "count": 1, "preset": true } },
+  { "level": 9, "xp": 200, "free": { "tickets": 3 }, "premium": { "name": "USEC stash key", "tpl": "5da743f586f7744014504f72", "count": 1 } },
+  { "level": 10, "xp": 250, "free": { "tickets": 5 }, "premium": { "name": "Graphics card", "tpl": "57347ca924597744596b4e71", "count": 1 } }
+]

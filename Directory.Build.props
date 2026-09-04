@@ -1,0 +1,8 @@
+<Project>
+  <PropertyGroup>
+    <!-- Override with /p:SptInstallPath=... if SPT is not at D:\SPT -->
+    <SptInstallPath Condition="'$(SptInstallPath)' == ''">D:\SPT</SptInstallPath>
+    <SptServerModsPath>$(SptInstallPath)\SPT_Runtime\user\mods</SptServerModsPath>
+    <SptClientPluginsPath>$(SptInstallPath)\BepInEx\plugins</SptClientPluginsPath>
+  </PropertyGroup>
+</Project>
