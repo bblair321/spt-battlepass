@@ -16,7 +16,7 @@ using UnityEngine.UI;
 
 namespace SptBattlePass.Client;
 
-[BepInPlugin("com.bblai.battlepass", "SPT Battle Pass", "0.2.1")]
+[BepInPlugin("com.bblai.battlepass", "SPT Battle Pass", "0.2.2")]
 [BepInDependency(FikaCompat.PluginGuid, BepInDependency.DependencyFlags.SoftDependency)]
 public class Plugin : BaseUnityPlugin
 {

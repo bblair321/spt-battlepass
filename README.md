@@ -6,7 +6,7 @@ Combination mod for **SPT 4.1.x**: daily / weekly / monthly challenges → paper
 
 Requires **SPT 4.1.x** (built against 4.1.4).
 
-1. Download `SPT-BattlePass-0.2.1.zip` from [Releases](https://github.com/bblair321/spt-battlepass/releases).
+1. Download `SPT-BattlePass-0.2.2.zip` from [Releases](https://github.com/bblair321/spt-battlepass/releases).
 2. Extract into your SPT folder so you get:
    - `SPT_Runtime/user/mods/com.bblai.battlepass/`
    - `BepInEx/plugins/com.bblai.battlepass/`
