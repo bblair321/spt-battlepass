@@ -6,7 +6,7 @@ Combination mod for **SPT 4.1.x**: daily / weekly / monthly challenges → paper
 
 Requires **SPT 4.1.x** (built against 4.1.4).
 
-1. Download `SPT-BattlePass-0.2.0.zip` from [Releases](https://github.com/bblair321/spt-battlepass/releases).
+1. Download `SPT-BattlePass-0.2.1.zip` from [Releases](https://github.com/bblair321/spt-battlepass/releases).
 2. Extract into your SPT folder so you get:
    - `SPT_Runtime/user/mods/com.bblai.battlepass/`
    - `BepInEx/plugins/com.bblai.battlepass/`
@@ -53,7 +53,7 @@ Restart **both** the SPT server and the game after a build. Copy fails if `SPT.S
 
 - Open **Character** (Gear / Health / Skills / Tasks). **BATTLE PASS** is the extra tab on the right, with a punched-ticket icon (not the Weekend Drops crate). Ticket count is in the panel header.
 - **Challenges**, **Track**, **Exchange**, **Season**, and **Settings** are the five views. Esc, Close, or a click on the dim backdrop dismisses the panel. Each view keeps its own scroll position. Exchange search and category chips stay pinned above the list. Challenges lists in-progress first and dims completed cards. Exchange is a two-column grid.
-- **Track** is a free/premium reward ladder. Pass XP is separate from PMC XP. Buying premium mid-month mails premium rewards for levels you already reached. Item rewards go to **Messages → SYSTEM**. Reopen Character if stash roubles look stale after the purchase.
+- **Track** is a free/premium reward ladder. Pass XP is separate from PMC XP. Buying premium mid-month mails premium rewards for levels you already reached. Item rewards go to **Messages → SYSTEM**.
 - **Exchange** has a search box, category chips (including **KEYS**), and **CAN AFFORD**. CLEAR resets the filters. Ammo matches the shop guns (9x18 / 9x19 / 12/70 / 7.62x39 / 7.62x54R / 5.45 / 5.56). Marked keys are not sold.
 - **Season** tracks this month’s completions, tickets earned/spent, leftover-crate mail, and lifetime totals. The header bar is monthly-challenge progress (`1 / 3`).
 - After a raid, a left-side card on the results screen lists what moved and tickets earned.

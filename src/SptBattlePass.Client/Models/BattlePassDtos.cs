@@ -280,6 +280,9 @@ public sealed class HandoverResultDto
 
     [JsonProperty("status")]
     public BattlePassStatusDto Status { get; set; }
+
+    [JsonProperty("stashChanges")]
+    public List<StashItemChangeDto> StashChanges { get; set; }
 }
 
 public sealed class TrackTierStatusDto
@@ -334,6 +337,18 @@ public sealed class PremiumResultDto
 
     [JsonProperty("status")]
     public BattlePassStatusDto Status { get; set; }
+
+    [JsonProperty("stashChanges")]
+    public List<StashItemChangeDto> StashChanges { get; set; }
+}
+
+public sealed class StashItemChangeDto
+{
+    [JsonProperty("id")]
+    public string Id { get; set; }
+
+    [JsonProperty("count")]
+    public int Count { get; set; }
 }
 
 public sealed class RaidEndResultDto

@@ -16,7 +16,7 @@ using UnityEngine.UI;
 
 namespace SptBattlePass.Client;
 
-[BepInPlugin("com.bblai.battlepass", "SPT Battle Pass", "0.2.0")]
+[BepInPlugin("com.bblai.battlepass", "SPT Battle Pass", "0.2.1")]
 [BepInDependency(FikaCompat.PluginGuid, BepInDependency.DependencyFlags.SoftDependency)]
 public class Plugin : BaseUnityPlugin
 {
@@ -484,8 +484,9 @@ public class Plugin : BaseUnityPlugin
             yield break;
         }
 
+        StashSync.Apply(result.StashChanges);
         SoundUtil.Play("QuestTurnedIn", "InsuranceItemReturnedToStash", "Ready");
-        _panel.SetShopNotice("Premium unlocked. Rewards for levels you already reached were mailed. Reopen Character if stash money looks stale.");
+        _panel.SetShopNotice("Premium unlocked. Rewards for levels you already reached were mailed.");
     }
 
     private IEnumerator HandoverCoroutine(string instanceId)
@@ -519,8 +520,9 @@ public class Plugin : BaseUnityPlugin
             yield break;
         }
 
+        StashSync.Apply(result.StashChanges);
         SoundUtil.Play("QuestTurnedIn", "InsuranceItemReturnedToStash", "Ready");
-        _panel.SetShopNotice($"Turned in {result.TurnedIn}. Reopen Character if stash still shows the items.");
+        _panel.SetShopNotice($"Turned in {result.TurnedIn}.");
     }
 
     private IEnumerator RerollCoroutine(string bucket)

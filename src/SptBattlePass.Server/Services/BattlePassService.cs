@@ -338,7 +338,8 @@ public class BattlePassService(
 
         int need = Math.Max(0, challenge.Target - challenge.Progress);
         var pmc = profileHelper.GetPmcProfile(sessionId);
-        int turnedIn = RemoveFromStash(pmc, sessionId, challenge.Tpl, need);
+        StashRemoval removal = RemoveFromStash(pmc, challenge.Tpl, need);
+        int turnedIn = removal.Taken;
         if (turnedIn <= 0)
         {
             return new HandoverResult { Ok = false, Error = "insufficient_items", Status = ToStatus(state) };
@@ -377,7 +378,13 @@ public class BattlePassService(
         }
 
         logger.Info($"[BattlePass] handover {instanceId} turnedIn={turnedIn} session={sessionId} tickets={state.Tickets}");
-        return new HandoverResult { Ok = true, TurnedIn = turnedIn, Status = ToStatus(state) };
+        return new HandoverResult
+        {
+            Ok = true,
+            TurnedIn = turnedIn,
+            Status = ToStatus(state),
+            StashChanges = removal.Changes
+        };
     }
 
     public async Task<PremiumResult> UnlockPremiumAsync(MongoId sessionId, bool debug)
@@ -399,6 +406,7 @@ public class BattlePassService(
             return new PremiumResult { Ok = false, Error = "already_premium", Status = ToStatus(state) };
         }
 
+        List<StashItemChange>? stashChanges = null;
         if (debug)
         {
             if (!catalog.Config.DebugGrants)
@@ -417,11 +425,13 @@ public class BattlePassService(
                     return new PremiumResult { Ok = false, Error = "insufficient_roubles", Status = ToStatus(state) };
                 }
 
-                int taken = RemoveFromStash(pmc, sessionId, RoubleTpl, cost);
-                if (taken < cost)
+                StashRemoval removal = RemoveFromStash(pmc, RoubleTpl, cost);
+                if (removal.Taken < cost)
                 {
                     return new PremiumResult { Ok = false, Error = "insufficient_roubles", Status = ToStatus(state) };
                 }
+
+                stashChanges = removal.Changes;
             }
         }
 
@@ -430,7 +440,7 @@ public class BattlePassService(
         await SaveAsync(sessionId, state);
         await saveServer.SaveProfileAsync(sessionId);
         logger.Info($"[BattlePass] premium unlocked session={sessionId} debug={debug} trackXp={state.TrackXp}");
-        return new PremiumResult { Ok = true, Status = ToStatus(state) };
+        return new PremiumResult { Ok = true, Status = ToStatus(state), StashChanges = stashChanges };
     }
 
     private static RerollResult? ValidateReroll(
@@ -1006,11 +1016,12 @@ public class BattlePassService(
         return (int)total;
     }
 
-    private int RemoveFromStash(SPTarkov.Server.Core.Models.Eft.Common.PmcData? pmc, MongoId sessionId, string tpl, int need)
+    private StashRemoval RemoveFromStash(SPTarkov.Server.Core.Models.Eft.Common.PmcData? pmc, string tpl, int need)
     {
+        var result = new StashRemoval();
         if (pmc?.Inventory?.Items == null || need <= 0 || string.IsNullOrWhiteSpace(tpl))
         {
-            return 0;
+            return result;
         }
 
         HashSet<MongoId> inStash = StashItemIds(pmc);
@@ -1023,7 +1034,6 @@ public class BattlePassService(
             .ToList();
 
         int remaining = need;
-        int turnedIn = 0;
         var removed = new HashSet<MongoId>();
         foreach (Item item in matches)
         {
@@ -1041,6 +1051,7 @@ public class BattlePassService(
             int take = Math.Min(stack, remaining);
             if (take >= stack)
             {
+                result.Changes.Add(new StashItemChange { Id = item.Id.ToString(), Count = 0 });
                 string itemId = item.Id.ToString();
                 for (int index = items.Count - 1; index >= 0; index--)
                 {
@@ -1065,14 +1076,17 @@ public class BattlePassService(
             else
             {
                 item.AddUpd();
+                int left = stack - take;
                 if (item.Upd != null)
                 {
-                    item.Upd.StackObjectsCount = stack - take;
+                    item.Upd.StackObjectsCount = left;
                 }
+
+                result.Changes.Add(new StashItemChange { Id = item.Id.ToString(), Count = left });
             }
 
             remaining -= take;
-            turnedIn += take;
+            result.Taken += take;
         }
 
         if (!ReferenceEquals(items, pmc.Inventory.Items))
@@ -1080,7 +1094,13 @@ public class BattlePassService(
             pmc.Inventory.Items = items;
         }
 
-        return turnedIn;
+        return result;
+    }
+
+    private sealed class StashRemoval
+    {
+        public int Taken { get; set; }
+        public List<StashItemChange> Changes { get; } = new();
     }
 
     private static HashSet<MongoId> StashItemIds(SPTarkov.Server.Core.Models.Eft.Common.PmcData pmc)

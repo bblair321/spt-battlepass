@@ -82,6 +82,9 @@ public sealed class HandoverResult
 
     [JsonPropertyName("status")]
     public BattlePassStatus? Status { get; set; }
+
+    [JsonPropertyName("stashChanges")]
+    public List<StashItemChange>? StashChanges { get; set; }
 }
 
 public sealed class PremiumRequest : IRequestData
@@ -100,4 +103,16 @@ public sealed class PremiumResult
 
     [JsonPropertyName("status")]
     public BattlePassStatus? Status { get; set; }
+
+    [JsonPropertyName("stashChanges")]
+    public List<StashItemChange>? StashChanges { get; set; }
+}
+
+public sealed class StashItemChange
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = "";
+
+    [JsonPropertyName("count")]
+    public int Count { get; set; }
 }
