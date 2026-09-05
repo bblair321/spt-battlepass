@@ -13,10 +13,8 @@ namespace SptBattlePass.Client.UI;
 internal static class BattlePassTabInjector
 {
     private const string TabObjectName = "BattlePassTab";
-    private const float BackPad = 12f;
-    private const float TabGap = 6f;
-    private const float MinTabWidth = 88f;
-    private const float DesiredTabWidth = 156f;
+    private const float BackPad = 10f;
+    private const float PrestigeClearance = 18f;
 
     private static readonly FieldInfo BackButtonField = typeof(InventoryScreen).GetField(
         "_backButton",
@@ -26,7 +24,8 @@ internal static class BattlePassTabInjector
     private static TextMeshProUGUI _label;
     private static Image _icon;
     private static Color _idleColor = new Color(0.73f, 0.73f, 0.73f, 1f);
-    private static bool _following;
+    private static bool _placing;
+    private static bool _placed;
 
     public static void TryInject()
     {
@@ -53,34 +52,90 @@ internal static class BattlePassTabInjector
                 return;
             }
 
-            RectTransform template = PickTemplate(labeled);
-            _button = BuildFromClone(template, tabs);
+            _button = BuildFromClone(PickTemplate(labeled), tabs);
+            _placed = false;
             Plugin.Log.LogInfo("[BattlePass] Character tab injected");
         }
 
         _button.SetActive(true);
-        Relayout(screen, tabs);
-        if (!_following && Plugin.Instance != null)
+        if (!_placing && Plugin.Instance != null)
         {
-            _following = true;
-            Plugin.Instance.StartCoroutine(FollowLayout(screen, tabs));
+            _placing = true;
+            Plugin.Instance.StartCoroutine(PlaceWhenReady(screen, tabs));
         }
     }
 
-    private static IEnumerator FollowLayout(InventoryScreen screen, Transform tabs)
+    private static IEnumerator PlaceWhenReady(InventoryScreen screen, Transform tabs)
     {
-        for (int i = 0; i < 60; i++)
+        for (int i = 0; i < 20; i++)
         {
             if (_button == null || tabs == null)
             {
                 break;
             }
 
-            Relayout(screen, tabs);
+            if (TryPlace(screen, tabs))
+            {
+                _placed = true;
+                break;
+            }
+
             yield return null;
         }
 
-        _following = false;
+        _placing = false;
+    }
+
+    private static bool TryPlace(InventoryScreen screen, Transform tabs)
+    {
+        RectTransform self = _button.GetComponent<RectTransform>();
+        List<RectTransform> labeled = CollectTabs(tabs);
+        RectTransform drops = labeled.FirstOrDefault(tab => tab != self && IsDropsTab(tab));
+        List<RectTransform> vanilla = labeled.Where(tab => tab != self && tab != drops).ToList();
+        if (vanilla.Count == 0)
+        {
+            return false;
+        }
+
+        RectTransform last = vanilla[vanilla.Count - 1];
+        RectTransform previous = vanilla.Count > 1 ? vanilla[vanilla.Count - 2] : null;
+        float pitch = previous != null
+            ? last.anchoredPosition.x - previous.anchoredPosition.x
+            : last.rect.width;
+        if (Mathf.Abs(pitch) < 20f)
+        {
+            pitch = Mathf.Max(last.rect.width, 120f);
+        }
+
+        MatchVanillaSize(self, last);
+        Canvas.ForceUpdateCanvases();
+        if (Mathf.Abs(WorldRight(last) - WorldLeft(last)) < 8f)
+        {
+            return false;
+        }
+
+        if (drops == null)
+        {
+            if (_placed)
+            {
+                return true;
+            }
+
+            self.anchoredPosition = new Vector2(last.anchoredPosition.x + pitch + PrestigeClearance, last.anchoredPosition.y);
+            return false;
+        }
+
+        float y = last.anchoredPosition.y;
+        self.anchoredPosition = new Vector2(last.anchoredPosition.x + pitch + PrestigeClearance, y);
+        drops.anchoredPosition = new Vector2(self.anchoredPosition.x + pitch, y);
+        return true;
+    }
+
+    private static void MatchVanillaSize(RectTransform self, RectTransform vanilla)
+    {
+        Vector2 size = self.sizeDelta;
+        size.x = vanilla.sizeDelta.x;
+        self.sizeDelta = size;
     }
 
     private static List<RectTransform> CollectTabs(Transform tabs)
@@ -94,7 +149,7 @@ internal static class BattlePassTabInjector
             }
         }
 
-        labeled.Sort((a, b) => WorldLeft(a).CompareTo(WorldLeft(b)));
+        labeled.Sort((a, b) => a.anchoredPosition.x.CompareTo(b.anchoredPosition.x));
         return labeled;
     }
 
@@ -127,6 +182,25 @@ internal static class BattlePassTabInjector
         return name == TabObjectName
                || name == "WeekendDropsTab"
                || name.IndexOf("Weekend", System.StringComparison.OrdinalIgnoreCase) >= 0;
+    }
+
+    private static bool IsDropsTab(RectTransform tab)
+    {
+        if (tab == null || (_button != null && tab.gameObject == _button))
+        {
+            return false;
+        }
+
+        string name = tab.name ?? "";
+        if (name == "WeekendDropsTab"
+            || name.IndexOf("Weekend", System.StringComparison.OrdinalIgnoreCase) >= 0)
+        {
+            return true;
+        }
+
+        TextMeshProUGUI label = tab.GetComponentInChildren<TextMeshProUGUI>(true);
+        string text = label != null ? label.text ?? "" : "";
+        return text.IndexOf("DROPS", System.StringComparison.OrdinalIgnoreCase) >= 0;
     }
 
     private static Transform FindTabsContainer(InventoryScreen screen)
@@ -203,6 +277,9 @@ internal static class BattlePassTabInjector
         if (_label != null)
         {
             _idleColor = _label.color;
+            _label.enableWordWrapping = false;
+            _label.overflowMode = TextOverflowModes.Ellipsis;
+            _label.text = "BATTLE PASS";
         }
 
         Image hitbox = clone.GetComponent<Image>() ?? clone.AddComponent<Image>();
@@ -227,85 +304,51 @@ internal static class BattlePassTabInjector
         return clone;
     }
 
-    private static void Relayout(InventoryScreen screen, Transform tabs)
+    private static RectTransform FindBackButton(InventoryScreen screen, RectTransform relativeTo)
     {
-        if (_button == null || tabs == null)
+        RectTransform candidate = null;
+        if (screen != null && BackButtonField?.GetValue(screen) is Component component)
         {
-            return;
+            candidate = component.GetComponent<RectTransform>();
         }
 
-        RectTransform self = _button.GetComponent<RectTransform>();
-        List<RectTransform> labeled = CollectTabs(tabs);
-        RectTransform drops = labeled.FirstOrDefault(tab => tab != self && IsExtraModTab(tab));
-        RectTransform vanillaLast = labeled
-            .Where(tab => tab != self && tab != drops)
-            .OrderBy(WorldLeft)
-            .LastOrDefault();
-        if (vanillaLast == null)
+        if (IsRightOf(candidate, relativeTo))
         {
-            return;
+            return candidate;
         }
 
-        RectTransform back = FindBackButton(screen);
-        float leftLimit = WorldRight(vanillaLast) + TabGap;
-        float rightLimit = back != null ? WorldLeft(back) - BackPad : leftLimit + DesiredTabWidth * 2f;
-        if (rightLimit <= leftLimit + 8f)
+        Transform row = relativeTo != null ? relativeTo.parent : null;
+        if (row == null && screen != null)
         {
-            rightLimit = leftLimit + DesiredTabWidth;
+            row = screen.transform;
         }
 
-        if (drops != null)
-        {
-            float dropsWidth = Mathf.Max(WorldWidth(drops), MinTabWidth);
-            float dropsLeftMax = rightLimit - dropsWidth;
-            float dropsLeftMin = leftLimit + MinTabWidth + TabGap;
-            float dropsLeft = dropsLeftMin <= dropsLeftMax
-                ? Mathf.Clamp(WorldLeft(drops), dropsLeftMin, dropsLeftMax)
-                : dropsLeftMax;
-
-            NudgeToWorldLeft(drops, dropsLeft);
-
-            float selfRight = WorldLeft(drops) - TabGap;
-            float available = selfRight - leftLimit;
-            float selfWidth = Mathf.Min(DesiredTabWidth, Mathf.Max(40f, available));
-            SetWorldWidth(self, selfWidth);
-            NudgeToWorldLeft(self, selfRight - selfWidth);
-            return;
-        }
-
-        float width = Mathf.Clamp(rightLimit - leftLimit, MinTabWidth, DesiredTabWidth);
-        SetWorldWidth(self, width);
-        NudgeToWorldLeft(self, leftLimit);
-        if (WorldRight(self) > rightLimit)
-        {
-            NudgeToWorldLeft(self, rightLimit - WorldWidth(self));
-        }
-    }
-
-    private static RectTransform FindBackButton(InventoryScreen screen)
-    {
-        if (screen == null)
+        if (row == null)
         {
             return null;
         }
 
-        if (BackButtonField?.GetValue(screen) is Component component)
-        {
-            return component.GetComponent<RectTransform>();
-        }
-
-        foreach (RectTransform rect in screen.GetComponentsInChildren<RectTransform>(true))
+        foreach (RectTransform rect in row.GetComponentsInChildren<RectTransform>(true))
         {
             string name = rect.name ?? "";
-            if (name.IndexOf("BackButton", System.StringComparison.OrdinalIgnoreCase) >= 0
-                || name.IndexOf("CloseButton", System.StringComparison.OrdinalIgnoreCase) >= 0
-                || name == "Back")
+            if (name.IndexOf("BackButton", System.StringComparison.OrdinalIgnoreCase) < 0
+                && name.IndexOf("CloseButton", System.StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                continue;
+            }
+
+            if (IsRightOf(rect, relativeTo))
             {
                 return rect;
             }
         }
 
         return null;
+    }
+
+    private static bool IsRightOf(RectTransform candidate, RectTransform relativeTo)
+    {
+        return candidate != null && relativeTo != null && WorldLeft(candidate) > WorldRight(relativeTo) - 4f;
     }
 
     private static float WorldLeft(RectTransform rect)
@@ -322,36 +365,38 @@ internal static class BattlePassTabInjector
         return Mathf.Max(corners[0].x, corners[1].x, corners[2].x, corners[3].x);
     }
 
-    private static float WorldWidth(RectTransform rect)
+    private static float WorldLeftInclusive(RectTransform root)
     {
-        return Mathf.Max(1f, WorldRight(rect) - WorldLeft(rect));
-    }
-
-    private static void NudgeToWorldLeft(RectTransform rect, float worldLeft)
-    {
-        float delta = worldLeft - WorldLeft(rect);
-        if (Mathf.Abs(delta) < 0.4f)
+        float left = WorldLeft(root);
+        Graphic[] graphics = root.GetComponentsInChildren<Graphic>(false);
+        foreach (Graphic graphic in graphics)
         {
-            return;
+            if (graphic == null || !graphic.isActiveAndEnabled)
+            {
+                continue;
+            }
+
+            left = Mathf.Min(left, WorldLeft(graphic.rectTransform));
         }
 
-        Vector3 position = rect.position;
-        position.x += delta;
-        rect.position = position;
+        return left;
     }
 
-    private static void SetWorldWidth(RectTransform rect, float worldWidth)
+    private static float WorldRightInclusive(RectTransform root)
     {
-        float current = WorldWidth(rect);
-        float scale = Mathf.Abs(rect.lossyScale.x);
-        if (scale < 0.01f)
+        float right = WorldRight(root);
+        Graphic[] graphics = root.GetComponentsInChildren<Graphic>(false);
+        foreach (Graphic graphic in graphics)
         {
-            scale = 1f;
+            if (graphic == null || !graphic.isActiveAndEnabled)
+            {
+                continue;
+            }
+
+            right = Mathf.Max(right, WorldRight(graphic.rectTransform));
         }
 
-        Vector2 size = rect.sizeDelta;
-        size.x += (worldWidth - current) / scale;
-        rect.sizeDelta = size;
+        return right;
     }
 
     private static void ApplyTabIcon(Transform normal)

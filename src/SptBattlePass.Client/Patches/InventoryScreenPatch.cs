@@ -38,7 +38,6 @@ public sealed class InventoryScreenPatch : ModulePatch
     private static IEnumerator InjectNextFrame()
     {
         yield return null;
-        yield return null;
         if (!FikaCompat.ShouldRunClient)
         {
             yield break;
