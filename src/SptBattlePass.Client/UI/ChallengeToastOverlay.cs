@@ -8,8 +8,8 @@ namespace SptBattlePass.Client.UI;
 
 public sealed class ChallengeToastOverlay
 {
-    private const float Width = 320f;
-    private const float Height = 68f;
+    private const float Width = 380f;
+    private const float Height = 80f;
     private const float SlideIn = 0.28f;
     private const float Hold = 3.4f;
     private const float SlideOut = 0.22f;
@@ -148,19 +148,26 @@ public sealed class ChallengeToastOverlay
             GUI.DrawTexture(new Rect(x, drawY, width, 3f * scale), _done);
             TarkovUi.Outline(box, new Color(TarkovUi.Green.r, TarkovUi.Green.g, TarkovUi.Green.b, 0.85f));
             GUI.contentColor = new Color(0.45f, 0.85f, 0.5f);
-            GUI.Label(new Rect(x + 14f * scale, drawY + 8f * scale, width - 28f * scale, 18f * scale), toast.Title, _title);
+            GUI.Label(new Rect(x + 14f * scale, drawY + 8f * scale, width - 28f * scale, 20f * scale), toast.Title, _title);
             GUI.contentColor = new Color(0.9f, 0.9f, 0.9f);
-            GUI.Label(new Rect(x + 14f * scale, drawY + 28f * scale, width - 110f * scale, 18f * scale), toast.Body, _body);
+            GUI.Label(new Rect(x + 14f * scale, drawY + 32f * scale, width - 130f * scale, 20f * scale), toast.Body, _body);
             if (toast.Tickets > 0 || toast.Xp > 0)
             {
-                GUI.contentColor = new Color(0.95f, 0.75f, 0.28f);
-                string reward = toast.Tickets > 0 ? $"+{toast.Tickets} tickets" : "";
-                if (toast.Xp > 0)
+                float rewardX = x + width - 118f * scale;
+                float rewardY = drawY + 24f * scale;
+                if (toast.Tickets > 0)
                 {
-                    reward = string.IsNullOrEmpty(reward) ? $"+{toast.Xp} XP" : reward + $"\n+{toast.Xp} XP";
+                    TicketArt.Draw(new Rect(rewardX, rewardY + 4f * scale, 28f * scale, 14f * scale));
+                    GUI.contentColor = new Color(0.95f, 0.75f, 0.28f);
+                    GUI.Label(new Rect(rewardX + 32f * scale, rewardY, 80f * scale, 22f * scale), $"+{toast.Tickets}", _reward);
+                    rewardY += 20f * scale;
                 }
 
-                GUI.Label(new Rect(x + width - 108f * scale, drawY + 22f * scale, 94f * scale, 36f * scale), reward, _reward);
+                if (toast.Xp > 0)
+                {
+                    GUI.contentColor = new Color(0.95f, 0.75f, 0.28f);
+                    GUI.Label(new Rect(rewardX, rewardY, 112f * scale, 20f * scale), $"+{toast.Xp} XP", _reward);
+                }
             }
 
             GUI.contentColor = Color.white;
@@ -177,8 +184,8 @@ public sealed class ChallengeToastOverlay
         TarkovUi.Ensure();
         _bg = TarkovUi.PanelTex;
         _done = TarkovUi.GreenTex;
-        _title = TarkovUi.Label(12, TarkovUi.Green, FontStyle.Bold);
-        _body = TarkovUi.Label(13, TarkovUi.Text);
-        _reward = TarkovUi.Label(12, TarkovUi.Amber, FontStyle.Bold, TextAnchor.MiddleRight, true);
+        _title = TarkovUi.Label(15, TarkovUi.Green, FontStyle.Bold);
+        _body = TarkovUi.Label(15, TarkovUi.Text);
+        _reward = TarkovUi.Label(14, TarkovUi.Amber, FontStyle.Bold, TextAnchor.MiddleLeft, true);
     }
 }

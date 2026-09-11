@@ -107,7 +107,7 @@ public sealed class InRaidWidget
         EnsureStyles();
         float now = Time.unscaledTime;
         float scale = Mathf.Max(0.85f, Screen.height / 1080f);
-        float width = 300f * scale;
+        float width = 360f * scale;
         float shownX = Screen.width - width - 8f * scale;
         float hiddenX = Screen.width + 12f * scale;
         switch (_phase)
@@ -163,8 +163,8 @@ public sealed class InRaidWidget
         }
 
         float height = (rows.Count == 0
-            ? 54f
-            : 34f + sections * 14f + rows.Count * 26f + 10f) * scale;
+            ? 62f
+            : 40f + sections * 16f + rows.Count * 30f + 10f) * scale;
         float y = 72f * scale;
         var box = new Rect(x, y, width, height);
         GUI.DrawTexture(box, _bg);
@@ -172,19 +172,19 @@ public sealed class InRaidWidget
         TarkovUi.Outline(box, new Color(TarkovUi.Amber.r, TarkovUi.Amber.g, TarkovUi.Amber.b, 0.8f));
 
         GUI.contentColor = new Color(0.92f, 0.86f, 0.62f);
-        GUI.Label(new Rect(x + 12f * scale, y + 6f * scale, width - 24f * scale, 20f * scale), "BATTLE PASS", _title);
+        GUI.Label(new Rect(x + 12f * scale, y + 6f * scale, width - 24f * scale, 24f * scale), "BATTLE PASS", _title);
         GUI.contentColor = Color.white;
-        GUI.DrawTexture(new Rect(x + 12f * scale, y + 28f * scale, width - 24f * scale, 1f), _sep);
+        GUI.DrawTexture(new Rect(x + 12f * scale, y + 32f * scale, width - 24f * scale, 1f), _sep);
 
         if (rows.Count == 0)
         {
             GUI.contentColor = new Color(0.62f, 0.62f, 0.62f);
-            GUI.Label(new Rect(x + 12f * scale, y + 32f * scale, width - 24f * scale, 18f * scale), "No challenges for this raid.", _row);
+            GUI.Label(new Rect(x + 12f * scale, y + 38f * scale, width - 24f * scale, 20f * scale), "No challenges for this raid.", _row);
             GUI.contentColor = Color.white;
             return;
         }
 
-        float rowY = y + 32f * scale;
+        float rowY = y + 38f * scale;
         string lastSection = null;
         foreach ((string section, BattlePassChallengeDto challenge) in rows)
         {
@@ -192,13 +192,13 @@ public sealed class InRaidWidget
             {
                 lastSection = section;
                 GUI.contentColor = new Color(0.7f, 0.7f, 0.7f);
-                GUI.Label(new Rect(x + 12f * scale, rowY, width - 24f * scale, 14f * scale), section, _section);
+                GUI.Label(new Rect(x + 12f * scale, rowY, width - 24f * scale, 16f * scale), section, _section);
                 GUI.contentColor = Color.white;
-                rowY += 14f * scale;
+                rowY += 16f * scale;
             }
 
             DrawRow(x, rowY, width, scale, challenge);
-            rowY += 26f * scale;
+            rowY += 30f * scale;
         }
     }
 
@@ -208,9 +208,9 @@ public sealed class InRaidWidget
         bool complete = challenge.Target > 0 && live >= challenge.Target;
         float fraction = challenge.Target <= 0 ? 0f : Mathf.Clamp01(live / (float)challenge.Target);
         string name = challenge.Name ?? "";
-        if (name.Length > 28)
+        if (name.Length > 34)
         {
-            name = name.Substring(0, 27) + "…";
+            name = name.Substring(0, 33) + "…";
         }
 
         GUI.contentColor = complete
@@ -219,12 +219,12 @@ public sealed class InRaidWidget
                 ? new Color(0.95f, 0.82f, 0.4f)
                 : new Color(0.88f, 0.88f, 0.88f);
         string label = BattlePassSettings.IsPinned(challenge) ? "★ " + name : name;
-        GUI.Label(new Rect(x + 12f * scale, y, width - 78f * scale, 16f * scale), label, _row);
+        GUI.Label(new Rect(x + 12f * scale, y, width - 86f * scale, 18f * scale), label, _row);
         GUI.contentColor = complete ? new Color(0.45f, 0.85f, 0.5f) : new Color(0.95f, 0.75f, 0.28f);
-        GUI.Label(new Rect(x + width - 62f * scale, y, 50f * scale, 16f * scale), $"{live}/{challenge.Target}", _count);
+        GUI.Label(new Rect(x + width - 70f * scale, y, 58f * scale, 18f * scale), $"{live}/{challenge.Target}", _count);
         GUI.contentColor = Color.white;
 
-        var bar = new Rect(x + 12f * scale, y + 17f * scale, width - 24f * scale, 3f * scale);
+        var bar = new Rect(x + 12f * scale, y + 20f * scale, width - 24f * scale, 4f * scale);
         GUI.DrawTexture(bar, _barBg);
         if (fraction > 0f)
         {
@@ -335,9 +335,9 @@ public sealed class InRaidWidget
         _barFill = TarkovUi.AmberTex;
         _barDone = TarkovUi.GreenTex;
         _sep = TarkovUi.SepTex;
-        _title = TarkovUi.Label(12, TarkovUi.Amber, FontStyle.Bold);
-        _row = TarkovUi.Label(11, TarkovUi.Text);
-        _count = TarkovUi.Label(11, TarkovUi.Amber, FontStyle.Bold, TextAnchor.MiddleRight);
-        _section = TarkovUi.Label(9, TarkovUi.Grey, FontStyle.Bold);
+        _title = TarkovUi.Label(15, TarkovUi.Amber, FontStyle.Bold);
+        _row = TarkovUi.Label(14, TarkovUi.Text);
+        _count = TarkovUi.Label(14, TarkovUi.Amber, FontStyle.Bold, TextAnchor.MiddleRight);
+        _section = TarkovUi.Label(11, TarkovUi.Grey, FontStyle.Bold);
     }
 }

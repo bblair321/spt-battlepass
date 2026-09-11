@@ -5,6 +5,13 @@ namespace SptBattlePass.Client.UI;
 internal static class TabIcon
 {
     private static Sprite _sprite;
+    private static Texture2D _texture;
+
+    public static Texture2D GetTexture()
+    {
+        Get();
+        return _texture;
+    }
 
     public static Sprite Get()
     {
@@ -13,11 +20,11 @@ internal static class TabIcon
             return _sprite;
         }
 
-        Texture2D texture = DrawGlyph();
-        texture.wrapMode = TextureWrapMode.Clamp;
-        texture.filterMode = FilterMode.Bilinear;
-        texture.hideFlags = HideFlags.HideAndDontSave;
-        _sprite = Sprite.Create(texture, new Rect(0f, 0f, texture.width, texture.height), new Vector2(0.5f, 0.5f), 100f);
+        _texture = DrawGlyph();
+        _texture.wrapMode = TextureWrapMode.Clamp;
+        _texture.filterMode = FilterMode.Bilinear;
+        _texture.hideFlags = HideFlags.HideAndDontSave;
+        _sprite = Sprite.Create(_texture, new Rect(0f, 0f, _texture.width, _texture.height), new Vector2(0.5f, 0.5f), 100f);
         _sprite.hideFlags = HideFlags.HideAndDontSave;
         return _sprite;
     }

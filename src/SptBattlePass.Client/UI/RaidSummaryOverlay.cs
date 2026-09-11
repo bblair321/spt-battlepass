@@ -45,12 +45,12 @@ public sealed class RaidSummaryOverlay
 
         EnsureStyles();
         float scale = Mathf.Max(0.75f, Screen.height / 1080f);
-        float width = 360f * scale;
+        float width = 420f * scale;
         int rows = (_result.Updates?.Count ?? 0)
             + (_result.MonthlyBonus > 0 || _result.MonthlyBonusXp > 0 ? 1 : 0);
         float height = Mathf.Min(
             Screen.height * 0.62f,
-            (92f + Mathf.Max(1, rows) * 58f) * scale);
+            (108f + Mathf.Max(1, rows) * 64f) * scale);
         var window = new Rect(28f * scale, (Screen.height - height) * 0.42f, width, height);
 
         TarkovUi.Frame(window);
@@ -61,7 +61,10 @@ public sealed class RaidSummaryOverlay
         GUILayout.FlexibleSpace();
         if (_result.TicketsEarned > 0)
         {
-            GUILayout.Label($"+{_result.TicketsEarned} tickets", _tickets);
+            TicketArt.DrawLayout(20f);
+            GUILayout.Space(4f);
+            GUILayout.Label($"+{_result.TicketsEarned}", _tickets, GUILayout.Height(20f));
+            GUILayout.Space(8f);
         }
 
         if (_result.XpEarned > 0)
@@ -97,18 +100,21 @@ public sealed class RaidSummaryOverlay
             GUILayout.FlexibleSpace();
             GUILayout.Label("COMPLETE", _complete);
             GUILayout.EndHorizontal();
-            var bonusParts = new List<string>();
+            GUILayout.BeginHorizontal();
             if (_result.MonthlyBonus > 0)
             {
-                bonusParts.Add($"+{_result.MonthlyBonus} tickets");
+                TicketArt.DrawLayout(16f);
+                GUILayout.Space(4f);
+                GUILayout.Label($"+{_result.MonthlyBonus}", _tickets, GUILayout.Height(16f));
+                GUILayout.Space(10f);
             }
 
             if (_result.MonthlyBonusXp > 0)
             {
-                bonusParts.Add($"+{_result.MonthlyBonusXp} XP");
+                GUILayout.Label($"+{_result.MonthlyBonusXp} XP", _tickets);
             }
 
-            GUILayout.Label(string.Join("  ", bonusParts.ToArray()), _tickets);
+            GUILayout.EndHorizontal();
             GUILayout.EndVertical();
             GUILayout.Space(6f);
         }
@@ -127,18 +133,23 @@ public sealed class RaidSummaryOverlay
         GUILayout.Label(complete ? "COMPLETE" : CategoryLabel(update.Category), complete ? _complete : _progress);
         GUILayout.EndHorizontal();
 
-        string progress = $"{update.PreviousProgress} → {update.Progress} / {update.Target}";
+        GUILayout.BeginHorizontal();
+        GUILayout.Label($"{update.PreviousProgress} → {update.Progress} / {update.Target}", _small);
         if (update.TicketsEarned > 0)
         {
-            progress += $"   +{update.TicketsEarned} ticket{(update.TicketsEarned == 1 ? "" : "s")}";
+            GUILayout.Space(8f);
+            TicketArt.DrawLayout(14f);
+            GUILayout.Space(4f);
+            GUILayout.Label($"+{update.TicketsEarned}", _small, GUILayout.Height(14f));
         }
 
         if (update.XpEarned > 0)
         {
-            progress += $"   +{update.XpEarned} XP";
+            GUILayout.Space(8f);
+            GUILayout.Label($"+{update.XpEarned} XP", _small);
         }
 
-        GUILayout.Label(progress, _small);
+        GUILayout.EndHorizontal();
         DrawProgress(update.Progress, update.Target, complete);
         GUILayout.EndVertical();
         GUILayout.Space(6f);
@@ -158,7 +169,7 @@ public sealed class RaidSummaryOverlay
     private void DrawProgress(int progress, int target, bool complete)
     {
         float fraction = target <= 0 ? 0f : Mathf.Clamp01(progress / (float)target);
-        Rect bar = GUILayoutUtility.GetRect(1f, 7f, GUILayout.ExpandWidth(true));
+        Rect bar = GUILayoutUtility.GetRect(1f, 8f, GUILayout.ExpandWidth(true));
         GUI.DrawTexture(bar, _barBg);
         if (fraction > 0f)
         {
@@ -180,11 +191,11 @@ public sealed class RaidSummaryOverlay
         _barFill = TarkovUi.AmberTex;
         _barComplete = TarkovUi.GreenTex;
 
-        _title = TarkovUi.Label(16, TarkovUi.Amber, FontStyle.Bold);
-        _tickets = TarkovUi.Label(15, TarkovUi.Amber, FontStyle.Bold);
-        _name = TarkovUi.Label(13, TarkovUi.Text, FontStyle.Bold, TextAnchor.UpperLeft, true);
-        _small = TarkovUi.Label(12, TarkovUi.Grey);
-        _complete = TarkovUi.Label(11, TarkovUi.Green, FontStyle.Bold);
-        _progress = TarkovUi.Label(11, TarkovUi.Amber, FontStyle.Bold);
+        _title = TarkovUi.Label(19, TarkovUi.Amber, FontStyle.Bold);
+        _tickets = TarkovUi.Label(18, TarkovUi.Amber, FontStyle.Bold);
+        _name = TarkovUi.Label(15, TarkovUi.Text, FontStyle.Bold, TextAnchor.UpperLeft, true);
+        _small = TarkovUi.Label(14, TarkovUi.Grey);
+        _complete = TarkovUi.Label(13, TarkovUi.Green, FontStyle.Bold);
+        _progress = TarkovUi.Label(13, TarkovUi.Amber, FontStyle.Bold);
     }
 }

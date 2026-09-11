@@ -134,8 +134,8 @@ public sealed class BattlePassPanel
 
         EnsureStyles();
         float scale = Mathf.Max(0.75f, Screen.height / 1080f);
-        float width = Mathf.Min(Screen.width - 80f, 1040f * scale);
-        float height = Mathf.Min(Screen.height - 80f, 760f * scale);
+        float width = Mathf.Min(Screen.width - 80f, 1240f * scale);
+        float height = Mathf.Min(Screen.height - 80f, 900f * scale);
         var window = new Rect((Screen.width - width) * 0.5f, (Screen.height - height) * 0.5f, width, height);
         _layoutWidth = window.width - 48f;
 
@@ -272,7 +272,7 @@ public sealed class BattlePassPanel
         {
             GUI.enabled = !_buying;
             int grant = _status.GrantAmount > 0 ? _status.GrantAmount : 10;
-            if (GUILayout.Button($"GRANT {grant}", _button, GUILayout.Width(110f), GUILayout.Height(28f)))
+            if (GUILayout.Button($"GRANT {grant}", _button, GUILayout.Width(130f), GUILayout.Height(34f)))
             {
                 Plugin.Instance.GrantTickets();
             }
@@ -281,7 +281,7 @@ public sealed class BattlePassPanel
             GUILayout.Space(8f);
         }
 
-        if (GUILayout.Button("CLOSE", _btnClose, GUILayout.Width(90f), GUILayout.Height(28f)))
+        if (GUILayout.Button("CLOSE", _btnClose, GUILayout.Width(100f), GUILayout.Height(34f)))
         {
             Hide();
         }
@@ -306,10 +306,12 @@ public sealed class BattlePassPanel
         }
 
         float flash = Mathf.Clamp01((_ticketFlashUntil - Time.unscaledTime) / 0.7f);
-        Color previous = GUI.contentColor;
+        Color previousContent = GUI.contentColor;
         GUI.contentColor = Color.Lerp(new Color(0.92f, 0.86f, 0.62f), Color.white, flash);
+        TicketArt.DrawLayout(28f);
+        GUILayout.Space(8f);
         GUILayout.Label(tickets.ToString("N0"), _ticket, GUILayout.Height(28f));
-        GUI.contentColor = previous;
+        GUI.contentColor = previousContent;
         GUILayout.Space(6f);
         GUILayout.Label("TICKETS", _ticketUnit, GUILayout.Height(28f));
     }
@@ -317,7 +319,7 @@ public sealed class BattlePassPanel
     private void DrawViewButton(string label, View view)
     {
         GUIStyle style = _view == view ? _tabOn : _tabOff;
-        if (GUILayout.Button(label, style, GUILayout.Height(30f), GUILayout.ExpandWidth(true)))
+        if (GUILayout.Button(label, style, GUILayout.Height(36f), GUILayout.ExpandWidth(true)))
         {
             if (_view != view)
             {
@@ -366,13 +368,13 @@ public sealed class BattlePassPanel
         GUILayout.FlexibleSpace();
         if (status.Premium)
         {
-            GUILayout.Label("ACTIVE", _stateComplete, GUILayout.Height(32f));
+            GUILayout.Label("ACTIVE", _stateComplete, GUILayout.Height(36f));
         }
         else
         {
             GUI.enabled = !_buying;
             string cost = status.PremiumCost.ToString("N0");
-            if (GUILayout.Button($"BUY PREMIUM  {cost} RUB", _btnBuy, GUILayout.Width(240f), GUILayout.Height(32f)))
+            if (GUILayout.Button($"BUY PREMIUM  {cost} RUB", _btnBuy, GUILayout.Width(280f), GUILayout.Height(36f)))
             {
                 Plugin.Instance.UnlockPremium(false);
             }
@@ -382,7 +384,7 @@ public sealed class BattlePassPanel
             {
                 GUILayout.Space(8f);
                 GUI.enabled = !_buying;
-                if (GUILayout.Button("UNLOCK (DEBUG)", _button, GUILayout.Width(150f), GUILayout.Height(32f)))
+                if (GUILayout.Button("UNLOCK (DEBUG)", _button, GUILayout.Width(170f), GUILayout.Height(36f)))
                 {
                     Plugin.Instance.UnlockPremium(true);
                 }
@@ -438,10 +440,10 @@ public sealed class BattlePassPanel
         }
 
         GUILayout.BeginHorizontal();
-        GUILayout.Space(36f);
-        GUILayout.Label("FREE", _small, GUILayout.Width(280f));
+        GUILayout.Space(40f);
+        GUILayout.Label("FREE", _small, GUILayout.Width(320f));
         GUILayout.FlexibleSpace();
-        GUILayout.Label("PREMIUM", _small, GUILayout.Width(280f));
+        GUILayout.Label("PREMIUM", _small, GUILayout.Width(320f));
         GUILayout.EndHorizontal();
         GUILayout.Space(4f);
 
@@ -464,14 +466,14 @@ public sealed class BattlePassPanel
         }
 
         GUILayout.BeginHorizontal(_cardStyle);
-        GUILayout.BeginVertical(GUILayout.Width(28f));
+        GUILayout.BeginVertical(GUILayout.Width(36f));
         GUILayout.Space(10f);
         GUILayout.Label(tier.Level.ToString(), reached ? _header : _small);
         GUILayout.EndVertical();
         GUILayout.Space(8f);
-        DrawTrackReward(tier.Free, 280f);
+        DrawTrackReward(tier.Free, 320f);
         GUILayout.FlexibleSpace();
-        DrawTrackReward(tier.Premium, 280f);
+        DrawTrackReward(tier.Premium, 320f);
         GUILayout.EndHorizontal();
         GUI.color = previous;
         GUILayout.Space(4f);
@@ -494,13 +496,23 @@ public sealed class BattlePassPanel
                 : Color.white;
         if (!string.IsNullOrEmpty(reward.Tpl))
         {
-            DrawItemIcon(reward.Tpl, 40f, tint);
+            DrawItemIcon(reward.Tpl, 48f, tint);
         }
         else
         {
-            Rect area = GUILayoutUtility.GetRect(40f, 40f, GUILayout.Width(40f), GUILayout.Height(40f));
+            Rect area = GUILayoutUtility.GetRect(48f, 48f, GUILayout.Width(48f), GUILayout.Height(48f));
             GUI.DrawTexture(area, _iconBg);
-            GUI.Label(area, reward.Tickets > 0 ? $"+{reward.Tickets}" : "•", _small);
+            if (reward.Tickets > 0)
+            {
+                Color previous = GUI.color;
+                GUI.color = tint;
+                TicketArt.Draw(new Rect(area.x + 4f, area.y + 12f, area.width - 8f, area.height - 24f));
+                GUI.color = previous;
+            }
+            else
+            {
+                GUI.Label(area, "•", _small);
+            }
         }
 
         GUILayout.Space(8f);
@@ -594,8 +606,6 @@ public sealed class BattlePassPanel
         }
 
         GUILayout.EndVertical();
-        GUILayout.Space(8f);
-        GUILayout.Label("Season totals start from this update. Older completions are not backfilled.", _small);
     }
 
     private void DrawSettings()
@@ -658,7 +668,7 @@ public sealed class BattlePassPanel
         GUILayout.Label(hint, _small);
         GUILayout.EndVertical();
         GUILayout.FlexibleSpace();
-        if (GUILayout.Button(entry.Value ? "ON" : "OFF", entry.Value ? _btnBuy : _button, GUILayout.Width(72f), GUILayout.Height(32f)))
+        if (GUILayout.Button(entry.Value ? "ON" : "OFF", entry.Value ? _btnBuy : _button, GUILayout.Width(80f), GUILayout.Height(36f)))
         {
             entry.Value = !entry.Value;
             SoundUtil.Play("ButtonClick", "TabButton");
@@ -748,7 +758,7 @@ public sealed class BattlePassPanel
             GUILayout.Label(challenge.Name, _body);
             GUILayout.FlexibleSpace();
             bool pinned = BattlePassSettings.IsPinned(challenge);
-            if (GUILayout.Button(pinned ? "PINNED" : "PIN", pinned ? _tabOn : _button, GUILayout.Width(72f), GUILayout.Height(22f)))
+            if (GUILayout.Button(pinned ? "PINNED" : "PIN", pinned ? _tabOn : _button, GUILayout.Width(84f), GUILayout.Height(26f)))
             {
                 BattlePassSettings.TogglePin(challenge);
                 SoundUtil.Play("ButtonClick", "TabButton");
@@ -768,7 +778,7 @@ public sealed class BattlePassPanel
             if (challenge.Type == "HandOver" && state != "complete")
             {
                 GUI.enabled = !_buying;
-                if (GUILayout.Button("TURN IN", _btnBuy, GUILayout.Width(88f), GUILayout.Height(22f)))
+                if (GUILayout.Button("TURN IN", _btnBuy, GUILayout.Width(100f), GUILayout.Height(26f)))
                 {
                     Plugin.Instance.Handover(challenge.InstanceId);
                 }
@@ -777,13 +787,22 @@ public sealed class BattlePassPanel
                 GUILayout.Space(8f);
             }
 
-            string reward = $"+{challenge.TicketReward} tickets";
-            if (xp > 0)
+            if (challenge.TicketReward > 0)
             {
-                reward += $"  ·  +{xp} XP";
+                TicketArt.DrawLayout(16f);
+                GUILayout.Space(4f);
             }
 
-            GUILayout.Label(reward, _small);
+            string reward = challenge.TicketReward > 0 ? $"+{challenge.TicketReward}" : "";
+            if (xp > 0)
+            {
+                reward = string.IsNullOrEmpty(reward) ? $"+{xp} XP" : reward + $"  ·  +{xp} XP";
+            }
+
+            if (!string.IsNullOrEmpty(reward))
+            {
+                GUILayout.Label(reward, _small, GUILayout.Height(16f));
+            }
             GUILayout.EndHorizontal();
             DrawProgress(challenge.Progress, challenge.Target, state);
             GUILayout.EndVertical();
@@ -813,7 +832,7 @@ public sealed class BattlePassPanel
         bool canAfford = _status.Tickets >= cost;
         bool canReroll = !_buying && !anyComplete && canAfford;
         GUI.enabled = canReroll;
-        if (GUILayout.Button($"REROLL {cost}  ({left} left)", _button, GUILayout.Height(24f), GUILayout.Width(150f)))
+        if (GUILayout.Button($"REROLL {cost}  ({left} left)", _button, GUILayout.Height(28f), GUILayout.Width(190f)))
         {
             Plugin.Instance.Reroll(bucket);
         }
@@ -918,7 +937,7 @@ public sealed class BattlePassPanel
             "in_progress" => _barFill,
             _ => _barIdle
         };
-        Rect bar = GUILayoutUtility.GetRect(1f, 4f, GUILayout.ExpandWidth(true));
+        Rect bar = GUILayoutUtility.GetRect(1f, 6f, GUILayout.ExpandWidth(true));
         GUI.DrawTexture(bar, _barBg);
         if (fraction > 0f)
         {
@@ -940,7 +959,7 @@ public sealed class BattlePassPanel
         {
             GUILayout.Label("No offers match that search.", _body);
             GUILayout.Space(8f);
-            if (GUILayout.Button("CLEAR FILTERS", _button, GUILayout.Width(140f), GUILayout.Height(28f)))
+            if (GUILayout.Button("CLEAR FILTERS", _button, GUILayout.Width(160f), GUILayout.Height(32f)))
             {
                 ClearShopFilters();
                 SoundUtil.Play("ButtonClick", "TabButton");
@@ -998,7 +1017,7 @@ public sealed class BattlePassPanel
 
         GUILayout.BeginVertical(_cardStyle, GUILayout.Width(width));
         GUILayout.BeginHorizontal();
-        DrawItemIcon(offer.Tpl, 44f, iconTint);
+        DrawItemIcon(offer.Tpl, 52f, iconTint);
         GUILayout.Space(8f);
         GUILayout.BeginVertical();
         GUILayout.Label(offer.Name, _body);
@@ -1019,11 +1038,13 @@ public sealed class BattlePassPanel
         GUILayout.EndHorizontal();
         GUILayout.Space(6f);
         GUILayout.BeginHorizontal();
-        GUILayout.Label($"{offer.Price} tickets", _header);
+        TicketArt.DrawLayout(20f);
+        GUILayout.Space(6f);
+        GUILayout.Label(offer.Price.ToString("N0"), _header, GUILayout.Height(20f));
         GUILayout.FlexibleSpace();
         GUI.enabled = canBuy;
         string buyLabel = soldOut ? "SOLD OUT" : "BUY";
-        if (GUILayout.Button(buyLabel, soldOut ? _button : _btnBuy, GUILayout.Width(78f), GUILayout.Height(28f)))
+        if (GUILayout.Button(buyLabel, soldOut ? _button : _btnBuy, GUILayout.Width(90f), GUILayout.Height(32f)))
         {
             Plugin.Instance.BuyOffer(offer.Id);
         }
@@ -1036,8 +1057,8 @@ public sealed class BattlePassPanel
     private void DrawShopFilters(List<BattlePassShopOfferDto> shop)
     {
         GUILayout.BeginHorizontal();
-        GUILayout.Label("Search", _small, GUILayout.Width(52f));
-        string nextQuery = GUILayout.TextField(_shopQuery ?? "", _field, GUILayout.Height(26f), GUILayout.ExpandWidth(true));
+        GUILayout.Label("Search", _small, GUILayout.Width(64f));
+        string nextQuery = GUILayout.TextField(_shopQuery ?? "", _field, GUILayout.Height(30f), GUILayout.ExpandWidth(true));
         if (nextQuery != _shopQuery)
         {
             _shopQuery = nextQuery;
@@ -1046,7 +1067,7 @@ public sealed class BattlePassPanel
 
         bool filtering = ShopFiltersActive();
         GUI.enabled = filtering;
-        if (GUILayout.Button("CLEAR", _button, GUILayout.Width(70f), GUILayout.Height(26f)))
+        if (GUILayout.Button("CLEAR", _button, GUILayout.Width(80f), GUILayout.Height(30f)))
         {
             ClearShopFilters();
             SoundUtil.Play("ButtonClick", "TabButton");
@@ -1080,7 +1101,7 @@ public sealed class BattlePassPanel
         float used = 0f;
         foreach ((string id, string label) in chips)
         {
-            float width = Mathf.Clamp(_chipOff.CalcSize(new GUIContent(label)).x + 22f, 56f, 160f);
+            float width = Mathf.Clamp(_chipOff.CalcSize(new GUIContent(label)).x + 28f, 64f, 180f);
             if (used > 0f && used + width > _layoutWidth)
             {
                 GUILayout.EndHorizontal();
@@ -1109,8 +1130,8 @@ public sealed class BattlePassPanel
     {
         GUIStyle style = selected ? _chipOn : _chipOff;
         bool clicked = width > 0f
-            ? GUILayout.Button(label, style, GUILayout.Height(24f), GUILayout.Width(width))
-            : GUILayout.Button(label, style, GUILayout.Height(24f));
+            ? GUILayout.Button(label, style, GUILayout.Height(28f), GUILayout.Width(width))
+            : GUILayout.Button(label, style, GUILayout.Height(28f));
         if (clicked)
         {
             onClick();
@@ -1281,38 +1302,38 @@ public sealed class BattlePassPanel
         {
             normal = { background = _rowBg },
             border = new RectOffset(0, 0, 0, 0),
-            padding = new RectOffset(10, 10, 8, 8),
+            padding = new RectOffset(12, 12, 10, 10),
             margin = new RectOffset(0, 0, 0, 0)
         };
         _accentComplete = new GUIStyle(GUIStyle.none) { normal = { background = _barComplete } };
         _accentProgress = new GUIStyle(GUIStyle.none) { normal = { background = _barFill } };
         _accentIdle = new GUIStyle(GUIStyle.none) { normal = { background = _barIdle } };
 
-        _title = TarkovUi.Label(22, TarkovUi.Amber, FontStyle.Bold);
-        _header = TarkovUi.Label(13, Color.white, FontStyle.Bold);
-        _body = TarkovUi.Label(13, TarkovUi.Text, FontStyle.Normal, TextAnchor.UpperLeft, true);
-        _small = TarkovUi.Label(11, TarkovUi.Grey);
-        _button = TarkovUi.Button(11, TarkovUi.Grey, TarkovUi.Btn, TarkovUi.Amber, TarkovUi.BtnHover);
-        _tabOn = TarkovUi.Button(11, TarkovUi.Amber, TarkovUi.TabOn, TarkovUi.Amber, TarkovUi.BtnHover);
-        _tabOff = TarkovUi.Button(11, TarkovUi.Grey, TarkovUi.Btn, TarkovUi.Amber, TarkovUi.BtnHover);
-        _chipOn = TarkovUi.Button(10, TarkovUi.Amber, TarkovUi.TabOn, Color.white, TarkovUi.BtnHover);
-        _chipOff = TarkovUi.Button(10, TarkovUi.Grey, TarkovUi.Btn, TarkovUi.Amber, TarkovUi.BtnHover);
-        _btnBuy = TarkovUi.Button(11, TarkovUi.Amber, TarkovUi.TabOn, Color.white, TarkovUi.BtnHover);
-        _btnClose = TarkovUi.Button(11, TarkovUi.Grey, TarkovUi.Btn, Color.white, TarkovUi.CloseHover);
-        _stateComplete = TarkovUi.Label(11, TarkovUi.Green, FontStyle.Bold);
-        _stateProgress = TarkovUi.Label(11, TarkovUi.Amber, FontStyle.Bold);
-        _stateIdle = TarkovUi.Label(11, TarkovUi.Dim, FontStyle.Bold);
-        _need = TarkovUi.Label(11, TarkovUi.Red, FontStyle.Bold);
-        _notice = TarkovUi.Label(13, TarkovUi.Amber, FontStyle.Bold, TextAnchor.UpperLeft, true);
-        _ticket = TarkovUi.Label(22, TarkovUi.Amber, FontStyle.Bold, TextAnchor.MiddleRight);
-        _ticketUnit = TarkovUi.Label(11, TarkovUi.Dim, FontStyle.Bold, TextAnchor.MiddleLeft);
+        _title = TarkovUi.Label(26, TarkovUi.Amber, FontStyle.Bold);
+        _header = TarkovUi.Label(16, Color.white, FontStyle.Bold);
+        _body = TarkovUi.Label(16, TarkovUi.Text, FontStyle.Normal, TextAnchor.UpperLeft, true);
+        _small = TarkovUi.Label(13, TarkovUi.Grey);
+        _button = TarkovUi.Button(13, TarkovUi.Grey, TarkovUi.Btn, TarkovUi.Amber, TarkovUi.BtnHover);
+        _tabOn = TarkovUi.Button(13, TarkovUi.Amber, TarkovUi.TabOn, TarkovUi.Amber, TarkovUi.BtnHover);
+        _tabOff = TarkovUi.Button(13, TarkovUi.Grey, TarkovUi.Btn, TarkovUi.Amber, TarkovUi.BtnHover);
+        _chipOn = TarkovUi.Button(12, TarkovUi.Amber, TarkovUi.TabOn, Color.white, TarkovUi.BtnHover);
+        _chipOff = TarkovUi.Button(12, TarkovUi.Grey, TarkovUi.Btn, TarkovUi.Amber, TarkovUi.BtnHover);
+        _btnBuy = TarkovUi.Button(13, TarkovUi.Amber, TarkovUi.TabOn, Color.white, TarkovUi.BtnHover);
+        _btnClose = TarkovUi.Button(13, TarkovUi.Grey, TarkovUi.Btn, Color.white, TarkovUi.CloseHover);
+        _stateComplete = TarkovUi.Label(13, TarkovUi.Green, FontStyle.Bold);
+        _stateProgress = TarkovUi.Label(13, TarkovUi.Amber, FontStyle.Bold);
+        _stateIdle = TarkovUi.Label(13, TarkovUi.Dim, FontStyle.Bold);
+        _need = TarkovUi.Label(13, TarkovUi.Red, FontStyle.Bold);
+        _notice = TarkovUi.Label(16, TarkovUi.Amber, FontStyle.Bold, TextAnchor.UpperLeft, true);
+        _ticket = TarkovUi.Label(26, TarkovUi.Amber, FontStyle.Bold, TextAnchor.MiddleRight);
+        _ticketUnit = TarkovUi.Label(13, TarkovUi.Dim, FontStyle.Bold, TextAnchor.MiddleLeft);
         _field = new GUIStyle(GUI.skin.textField)
         {
-            fontSize = 13,
+            fontSize = 15,
             alignment = TextAnchor.MiddleLeft,
             font = TarkovUi.Font,
             border = new RectOffset(0, 0, 0, 0),
-            padding = new RectOffset(8, 8, 4, 4)
+            padding = new RectOffset(10, 10, 6, 6)
         };
         _field.normal.textColor = TarkovUi.Text;
         _field.normal.background = TarkovUi.Tex(new Color(0.09f, 0.09f, 0.095f, 1f));

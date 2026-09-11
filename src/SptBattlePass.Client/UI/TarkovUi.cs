@@ -141,7 +141,7 @@ internal static class TarkovUi
             font = Font,
             border = new RectOffset(0, 0, 0, 0),
             margin = new RectOffset(0, 0, 0, 0),
-            padding = new RectOffset(8, 8, 4, 4)
+            padding = new RectOffset(10, 10, 6, 6)
         };
         gui.normal.textColor = text;
         gui.normal.background = Tex(bg);
