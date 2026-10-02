@@ -29,7 +29,7 @@ public class ChallengeCatalog
             .OrderBy(tier => tier.Level)
             .ToList();
         Config = LoadConfig(jsonUtil, logger, Path.Combine(root, "config.json"));
-        logger.Info($"[BattlePass] catalog loaded: daily={Daily.Count} weekly={Weekly.Count} monthly={Monthly.Count} shop={Shop.Count} crate={Crate.Count} track={Track.Count} debug={Config.DebugGrants}");
+        logger.Info($"[BattlePass] catalog loaded: daily={Daily.Count} weekly={Weekly.Count} monthly={Monthly.Count} shop={Shop.Count} crate={Crate.Count} track={Track.Count} catalogVersion={Config.CatalogVersion} debug={Config.DebugGrants}");
     }
 
     private static ModConfig LoadConfig(JsonUtil jsonUtil, ISptLogger<ChallengeCatalog> logger, string path)

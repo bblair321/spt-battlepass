@@ -1,5 +1,5 @@
 {
-    "debugGrants": false,
+  "debugGrants": false,
   "grantAmount": 10,
   "challengesPerBucket": 3,
   "monthlyBonus": 5,
@@ -15,5 +15,6 @@
   "trackXpDaily": 8,
   "trackXpWeekly": 25,
   "trackXpMonthly": 60,
-  "trackXpMonthlyBonus": 40
+  "trackXpMonthlyBonus": 40,
+  "catalogVersion": 1
 }

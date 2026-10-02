@@ -96,4 +96,7 @@ public sealed class BattlePassProfileState
 
     [JsonPropertyName("trackPremiumClaimed")]
     public int TrackPremiumClaimed { get; set; }
+
+    [JsonPropertyName("catalogVersion")]
+    public int CatalogVersion { get; set; }
 }

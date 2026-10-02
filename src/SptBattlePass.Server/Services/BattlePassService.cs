@@ -543,6 +543,7 @@ public class BattlePassService(
             state.MonthlyKey = monthlyKey;
             state.Challenges.Monthly = Roll(catalog.Monthly, "monthly", profileId, monthlyKey, SeasonClock.MonthlyExpiryIso(now));
             state.Shop = CloneShop();
+            state.CatalogVersion = catalog.Config.CatalogVersion;
             changed = true;
             logger.Info($"[BattlePass] monthly rollover {profileId} {previousSeason} -> {monthlyKey} leftover={leftover} crate={mailedCrate}");
         }
@@ -563,7 +564,7 @@ public class BattlePassService(
             changed = true;
         }
 
-        if (MergeShopFromCatalog(state))
+        if (SyncShopFromCatalog(state))
         {
             changed = true;
         }
@@ -633,38 +634,18 @@ public class BattlePassService(
             : fallback;
     }
 
-    private bool MergeShopFromCatalog(BattlePassProfileState state)
+    private bool SyncShopFromCatalog(BattlePassProfileState state)
     {
-        bool changed = false;
-        var existing = state.Shop.ToDictionary(offer => offer.Id, StringComparer.OrdinalIgnoreCase);
-        foreach (BattlePassShopOffer catalogOffer in catalog.Shop)
+        int version = catalog.Config.CatalogVersion;
+        if (state.CatalogVersion == version && state.Shop.Count > 0)
         {
-            if (existing.TryGetValue(catalogOffer.Id, out BattlePassShopOffer? current))
-            {
-                if (current.Name != catalogOffer.Name
-                    || current.Tpl != catalogOffer.Tpl
-                    || current.Count != catalogOffer.Count
-                    || current.Price != catalogOffer.Price
-                    || current.Category != catalogOffer.Category
-                    || current.Preset != catalogOffer.Preset)
-                {
-                    current.Name = catalogOffer.Name;
-                    current.Tpl = catalogOffer.Tpl;
-                    current.Count = catalogOffer.Count;
-                    current.Price = catalogOffer.Price;
-                    current.Category = catalogOffer.Category;
-                    current.Preset = catalogOffer.Preset;
-                    changed = true;
-                }
-
-                continue;
-            }
-
-            state.Shop.Add(CloneOffer(catalogOffer));
-            changed = true;
+            return false;
         }
 
-        return changed;
+        state.Shop = CloneShop();
+        state.CatalogVersion = version;
+        logger.Info($"[BattlePass] shop restocked catalogVersion={version} offers={state.Shop.Count}");
+        return true;
     }
 
     private List<BattlePassShopOffer> CloneShop()
@@ -696,7 +677,7 @@ public class BattlePassService(
         string seedSuffix = "")
     {
         int count = Math.Clamp(catalog.Config.ChallengesPerBucket, 1, 6);
-        var picked = Pick(pool, count, profileId + "|" + periodKey + seedSuffix);
+        var picked = PickMixed(pool, count, profileId + "|" + periodKey + seedSuffix);
         return picked.Select(template => new BattlePassChallenge
         {
             InstanceId = string.IsNullOrEmpty(seedSuffix)
@@ -721,9 +702,9 @@ public class BattlePassService(
         }).ToList();
     }
 
-    private static List<T> Pick<T>(IReadOnlyList<T> pool, int count, string seed)
+    private static List<ChallengeTemplate> PickMixed(IReadOnlyList<ChallengeTemplate> pool, int count, string seed)
     {
-        var list = pool.ToList();
+        var list = pool.Where(template => template != null && !string.IsNullOrEmpty(template.Id)).ToList();
         var rng = new Random(DeterministicSeed(seed));
         for (int i = list.Count - 1; i > 0; i--)
         {
@@ -731,7 +712,54 @@ public class BattlePassService(
             (list[i], list[j]) = (list[j], list[i]);
         }
 
-        return list.Take(Math.Min(count, list.Count)).ToList();
+        int take = Math.Min(count, list.Count);
+        var picked = new List<ChallengeTemplate>(take);
+        var used = new HashSet<string>(StringComparer.Ordinal);
+        foreach (ChallengeTemplate template in list)
+        {
+            if (picked.Count >= take)
+            {
+                break;
+            }
+
+            if (used.Add(MixFamily(template.Type)))
+            {
+                picked.Add(template);
+            }
+        }
+
+        foreach (ChallengeTemplate template in list)
+        {
+            if (picked.Count >= take)
+            {
+                break;
+            }
+
+            if (picked.Exists(item => item.Id == template.Id))
+            {
+                continue;
+            }
+
+            picked.Add(template);
+        }
+
+        return picked;
+    }
+
+    private static string MixFamily(string type)
+    {
+        return type switch
+        {
+            "KillScavs" or "KillScavsMap" or "KillScavsWeapon" => "scav",
+            "KillPmcs" or "KillPmcsMap" or "KillPmcsWeapon" or "HeadshotPmcs" => "pmc",
+            "KillBosses" or "KillRaiders" or "KillRogues" or "KillCultists" => "special",
+            "Headshots" or "HeadshotsMap" or "HeadshotWeapon" => "headshot",
+            "KillWeapon" or "KillMelee" or "KillGrenade" => "weapon",
+            "Survive" or "SurviveCount" or "SurvivePmc" or "SurviveScav" or "SurviveNight" or "SurviveDay" => "survive",
+            "ExtractMap" => "extract",
+            "FindInRaid" or "HandOver" => "loot",
+            _ => string.IsNullOrEmpty(type) ? "other" : type
+        };
     }
 
     private static int DeterministicSeed(string value)

@@ -54,4 +54,8 @@ public sealed class ModConfig
 
     [JsonPropertyName("trackXpMonthlyBonus")]
     public int TrackXpMonthlyBonus { get; set; } = 40;
+
+    /// <summary>Bump this when shop/track/crate/challenge pools change so live profiles restock the shop.</summary>
+    [JsonPropertyName("catalogVersion")]
+    public int CatalogVersion { get; set; } = 0;
 }
