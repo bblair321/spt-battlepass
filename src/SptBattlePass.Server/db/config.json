@@ -12,9 +12,14 @@
   "xpMonthly": 4000,
   "xpMonthlyBonus": 2500,
   "premiumCostRoubles": 750000,
-  "trackXpDaily": 8,
+  "trackXpDaily": 10,
   "trackXpWeekly": 25,
   "trackXpMonthly": 60,
   "trackXpMonthlyBonus": 40,
-  "catalogVersion": 1
+  "catalogVersion": 3,
+  "seasonThemes": {
+    "2026-10": "early-wipe",
+    "2026-11": "mid-wipe",
+    "2026-12": "late-wipe"
+  }
 }

@@ -17,7 +17,8 @@ public class BattlePassService(
     ChallengeCatalog catalog,
     ShopDelivery shopDelivery,
     SaveServer saveServer,
-    ProfileHelper profileHelper)
+    ProfileHelper profileHelper,
+    SPTarkov.Server.Core.Helpers.Items.ItemHelper itemHelper)
 {
     public const string ProfileModKey = "com.bblai.battlepass";
     private const int MaxTrackedRaidIds = 24;
@@ -84,7 +85,9 @@ public class BattlePassService(
             WeaponScavKills = ClampDict(raid.WeaponScavKills),
             WeaponPmcKills = ClampDict(raid.WeaponPmcKills),
             WeaponHeadshots = ClampDict(raid.WeaponHeadshots),
-            FirItems = ClampDict(raid.FirItems)
+            FirItems = ClampDict(raid.FirItems),
+            Extract = raid.Extract ?? "",
+            BossesNamed = ClampDict(raid.BossKillsNamed)
         };
 
         Dictionary<string, ChallengeSnap> before = SnapshotChallenges(state);
@@ -142,7 +145,7 @@ public class BattlePassService(
         return result;
     }
 
-    public async Task<BuyResult> BuyAsync(MongoId sessionId, string offerId)
+    public async Task<BuyResult> BuyAsync(MongoId sessionId, string offerId, int requestedCount = 1)
     {
         var state = await LoadAsync(sessionId);
         RolloverResult buyRollover = ApplyRollovers(state, sessionId);
@@ -167,15 +170,30 @@ public class BattlePassService(
             return Fail("out_of_stock", state);
         }
 
-        if (state.Tickets < offer.Price)
+        int quantity = Math.Clamp(requestedCount, 1, 10);
+        if (offer.StockRemaining != null)
         {
-            return Fail("insufficient_tickets", state);
+            quantity = Math.Min(quantity, Math.Max(0, offer.StockRemaining.Value));
         }
+
+        if (offer.Price > 0)
+        {
+            quantity = Math.Min(quantity, state.Tickets / offer.Price);
+        }
+
+        if (quantity < 1)
+        {
+            return Fail(offer.StockRemaining is <= 0 ? "out_of_stock" : "insufficient_tickets", state);
+        }
+
+        int totalPrice = offer.Price * quantity;
+        var bundled = CloneOffer(offer);
+        bundled.Count = Math.Max(1, offer.Count) * quantity;
 
         string delivery;
         try
         {
-            delivery = shopDelivery.Deliver(sessionId, offer);
+            delivery = shopDelivery.Deliver(sessionId, bundled);
         }
         catch (Exception exception)
         {
@@ -183,21 +201,22 @@ public class BattlePassService(
             return Fail("invalid_item", state);
         }
 
-        state.Tickets -= offer.Price;
-        AddSpent(state, offer.Price);
+        state.Tickets -= totalPrice;
+        AddSpent(state, totalPrice);
         if (offer.StockRemaining != null)
         {
-            offer.StockRemaining--;
+            offer.StockRemaining -= quantity;
         }
 
         await SaveAsync(sessionId, state);
         await saveServer.SaveProfileAsync(sessionId);
-        logger.Info($"[BattlePass] bought {offerId} via {delivery} session={sessionId} tickets={state.Tickets}");
+        logger.Info($"[BattlePass] bought {quantity}x {offerId} via {delivery} session={sessionId} tickets={state.Tickets}");
         return new BuyResult
         {
             Ok = true,
             Delivery = delivery,
             OfferName = offer.Name,
+            Quantity = quantity,
             Status = ToStatus(state)
         };
     }
@@ -542,7 +561,7 @@ public class BattlePassService(
             state.MonthlyBonusClaimed = false;
             state.MonthlyKey = monthlyKey;
             state.Challenges.Monthly = Roll(catalog.Monthly, "monthly", profileId, monthlyKey, SeasonClock.MonthlyExpiryIso(now));
-            state.Shop = CloneShop();
+            state.Shop = CloneShop(monthlyKey);
             state.CatalogVersion = catalog.Config.CatalogVersion;
             changed = true;
             logger.Info($"[BattlePass] monthly rollover {profileId} {previousSeason} -> {monthlyKey} leftover={leftover} crate={mailedCrate}");
@@ -580,7 +599,9 @@ public class BattlePassService(
 
     private bool SendConsolationCrate(MongoId sessionId, int leftoverTickets, string previousSeason)
     {
-        List<(string Tpl, int Count)> contents = ConvertTicketsToCrate(leftoverTickets);
+        List<(string Tpl, int Count, bool Preset)> contents = ConvertTicketsToCrate(leftoverTickets, catalog.CrateFor(previousSeason))
+            .Select(line => (line.Tpl, line.Count, line.Preset))
+            .ToList();
         if (contents.Count == 0)
         {
             logger.Warning($"[BattlePass] crate conversion produced nothing for {leftoverTickets} tickets");
@@ -588,39 +609,84 @@ public class BattlePassService(
         }
 
         string seasonName = SeasonClock.SeasonName(ParseSeasonMonth(previousSeason, SeasonClock.UtcNow));
+        string grade = CrateGradeName(leftoverTickets);
         return shopDelivery.DeliverMail(
             sessionId,
-            $"Battle Pass {seasonName} ended. Your {leftoverTickets} unspent tickets were converted into a consolation crate. Collect it from Messages.",
+            $"Battle Pass {seasonName} ended. Your {leftoverTickets} unspent tickets were converted into a {grade}. Collect it from Messages.",
             contents);
     }
 
-    private List<(string Tpl, int Count)> ConvertTicketsToCrate(int tickets)
+    private List<CratePackLine> ConvertTicketsToCrate(int tickets, IReadOnlyList<CrateOffer> crate)
     {
-        const int maxStacks = 10;
-        var contents = new List<(string Tpl, int Count)>();
+        int maxStacks = Math.Clamp(6 + tickets / 8, 6, 16);
+        var contents = new List<CratePackLine>();
         int remaining = tickets;
-        foreach (CrateOffer offer in catalog.Crate
+        foreach (CrateOffer offer in crate
                      .Where(entry => entry.TicketValue > 0 && !string.IsNullOrWhiteSpace(entry.Tpl))
+                     .Where(entry => tickets >= Math.Max(0, entry.MinTickets))
                      .OrderByDescending(entry => entry.TicketValue)
+                     .ThenByDescending(entry => entry.MinTickets)
                      .ThenBy(entry => entry.Id))
         {
-            int taken = 0;
-            int cap = Math.Max(1, offer.Max);
-            while (remaining >= offer.TicketValue && taken < cap && contents.Count < maxStacks)
-            {
-                contents.Add((offer.Tpl, Math.Max(1, offer.Count)));
-                remaining -= offer.TicketValue;
-                taken++;
-            }
-
             if (contents.Count >= maxStacks)
             {
                 break;
             }
+
+            int taken = 0;
+            int cap = Math.Max(1, offer.Max);
+            while (remaining >= offer.TicketValue && taken < cap)
+            {
+                remaining -= offer.TicketValue;
+                taken++;
+            }
+
+            if (taken > 0)
+            {
+                contents.Add(new CratePackLine(
+                    string.IsNullOrWhiteSpace(offer.Name) ? offer.Tpl : offer.Name,
+                    offer.Tpl,
+                    Math.Max(1, offer.Count) * taken,
+                    offer.Preset));
+            }
         }
 
+        logger.Info($"[BattlePass] crate packed leftover={tickets} grade={CrateGradeName(tickets)} stacks={contents.Count} unspent={remaining}");
         return contents;
     }
+
+    private CratePreview BuildCratePreview(int tickets, string seasonId)
+    {
+        if (tickets <= 0)
+        {
+            return new CratePreview();
+        }
+
+        return new CratePreview
+        {
+            Grade = CrateGradeName(tickets),
+            Tickets = tickets,
+            Items = ConvertTicketsToCrate(tickets, catalog.CrateFor(seasonId))
+                .Select(line => new CratePreviewItem
+                {
+                    Name = line.Name,
+                    Tpl = line.Tpl,
+                    Count = line.Count,
+                    Preset = line.Preset
+                })
+                .ToList()
+        };
+    }
+
+    private readonly record struct CratePackLine(string Name, string Tpl, int Count, bool Preset);
+
+    internal static string CrateGradeName(int leftover) => leftover switch
+    {
+        >= 45 => "season cache",
+        >= 25 => "stash crate",
+        >= 8 => "supply crate",
+        _ => "consolation kit"
+    };
 
     private static DateTime ParseSeasonMonth(string monthlyKey, DateTime fallback)
     {
@@ -642,15 +708,16 @@ public class BattlePassService(
             return false;
         }
 
-        state.Shop = CloneShop();
+        state.Shop = CloneShop(state.SeasonId);
         state.CatalogVersion = version;
-        logger.Info($"[BattlePass] shop restocked catalogVersion={version} offers={state.Shop.Count}");
+        logger.Info($"[BattlePass] shop restocked catalogVersion={version} theme={catalog.ThemeIdFor(state.SeasonId)} offers={state.Shop.Count}");
         return true;
     }
 
-    private List<BattlePassShopOffer> CloneShop()
+    private List<BattlePassShopOffer> CloneShop(string? seasonId = null)
     {
-        return catalog.Shop.Select(CloneOffer).ToList();
+        string key = string.IsNullOrWhiteSpace(seasonId) ? SeasonClock.MonthlyKey(SeasonClock.UtcNow) : seasonId;
+        return catalog.ShopFor(key).Select(CloneOffer).ToList();
     }
 
     private static BattlePassShopOffer CloneOffer(BattlePassShopOffer offer)
@@ -698,6 +765,9 @@ public class BattlePassService(
             Map = template.Map,
             Weapon = template.Weapon,
             Tpl = template.Tpl,
+            Parent = template.Parent,
+            Boss = template.Boss,
+            Extract = template.Extract,
             TimeOfDay = template.TimeOfDay
         }).ToList();
     }
@@ -752,12 +822,12 @@ public class BattlePassService(
         {
             "KillScavs" or "KillScavsMap" or "KillScavsWeapon" => "scav",
             "KillPmcs" or "KillPmcsMap" or "KillPmcsWeapon" or "HeadshotPmcs" => "pmc",
-            "KillBosses" or "KillRaiders" or "KillRogues" or "KillCultists" => "special",
+            "KillBosses" or "KillBoss" or "KillRaiders" or "KillRogues" or "KillCultists" => "special",
             "Headshots" or "HeadshotsMap" or "HeadshotWeapon" => "headshot",
             "KillWeapon" or "KillMelee" or "KillGrenade" => "weapon",
             "Survive" or "SurviveCount" or "SurvivePmc" or "SurviveScav" or "SurviveNight" or "SurviveDay" => "survive",
-            "ExtractMap" => "extract",
-            "FindInRaid" or "HandOver" => "loot",
+            "ExtractMap" or "ExtractNamed" => "extract",
+            "FindInRaid" or "FindInRaidCategory" or "HandOver" => "loot",
             _ => string.IsNullOrEmpty(type) ? "other" : type
         };
     }
@@ -797,9 +867,11 @@ public class BattlePassService(
         public Dictionary<string, int> WeaponPmcKills { get; init; } = [];
         public Dictionary<string, int> WeaponHeadshots { get; init; } = [];
         public Dictionary<string, int> FirItems { get; init; } = [];
+        public string Extract { get; init; } = "";
+        public Dictionary<string, int> BossesNamed { get; init; } = [];
     }
 
-    private static void ApplyToBucket(List<BattlePassChallenge> challenges, RaidTally raid)
+    private void ApplyToBucket(List<BattlePassChallenge> challenges, RaidTally raid)
     {
         foreach (BattlePassChallenge challenge in challenges)
         {
@@ -814,6 +886,7 @@ public class BattlePassService(
                 "KillScavs" => raid.Scavs,
                 "KillPmcs" => raid.Pmcs,
                 "KillBosses" => raid.Bosses,
+                "KillBoss" => NamedBossCount(raid.BossesNamed, challenge.Boss),
                 "KillRaiders" => raid.Raiders,
                 "KillRogues" => raid.Rogues,
                 "KillCultists" => raid.Cultists,
@@ -828,6 +901,7 @@ public class BattlePassService(
                 "SurviveNight" => raid.Survived && raid.IsNight ? 1 : 0,
                 "SurviveDay" => raid.Survived && !raid.IsNight ? 1 : 0,
                 "ExtractMap" => raid.Survived && onMap ? 1 : 0,
+                "ExtractNamed" => raid.Survived && ItemParents.ExtractMatches(raid.Extract, challenge.Extract ?? "") ? 1 : 0,
                 "KillScavsMap" => onMap ? raid.Scavs : 0,
                 "KillPmcsMap" => onMap ? raid.Pmcs : 0,
                 "HeadshotsMap" => onMap ? raid.Headshots : 0,
@@ -836,6 +910,7 @@ public class BattlePassService(
                 "KillPmcsWeapon" => WeaponCount(raid.WeaponPmcKills, challenge.Weapon),
                 "HeadshotWeapon" => WeaponCount(raid.WeaponHeadshots, challenge.Weapon),
                 "FindInRaid" => raid.Survived ? WeaponCount(raid.FirItems, challenge.Tpl) : 0,
+                "FindInRaidCategory" => raid.Survived ? FirCategoryCount(raid.FirItems, challenge.Parent) : 0,
                 _ => 0
             };
 
@@ -976,6 +1051,52 @@ public class BattlePassService(
         }
 
         return 0;
+    }
+
+    private int FirCategoryCount(Dictionary<string, int> firItems, string? parent)
+    {
+        if (firItems == null || firItems.Count == 0 || string.IsNullOrWhiteSpace(parent))
+        {
+            return 0;
+        }
+
+        int total = 0;
+        foreach (KeyValuePair<string, int> pair in firItems)
+        {
+            if (CatalogValidator.ItemMatchesParent(itemHelper, pair.Key, parent))
+            {
+                total += Clamp(pair.Value);
+            }
+        }
+
+        return total;
+    }
+
+    private static int NamedBossCount(Dictionary<string, int> bosses, string? required)
+    {
+        if (bosses == null || bosses.Count == 0 || string.IsNullOrWhiteSpace(required))
+        {
+            return 0;
+        }
+
+        int total = 0;
+        foreach (KeyValuePair<string, int> pair in bosses)
+        {
+            if (ItemParents.BossMatches(pair.Key, required))
+            {
+                total += Clamp(pair.Value);
+            }
+        }
+
+        return total;
+    }
+
+    private IReadOnlyList<TrackTier> TrackFor(BattlePassProfileState state)
+    {
+        string key = string.IsNullOrWhiteSpace(state.SeasonId)
+            ? SeasonClock.MonthlyKey(SeasonClock.UtcNow)
+            : state.SeasonId;
+        return catalog.TrackFor(key);
     }
 
     private static bool TimeOfDayMatches(bool raidIsNight, string? timeOfDay)
@@ -1211,12 +1332,15 @@ public class BattlePassService(
         DateTime now = SeasonClock.UtcNow;
         string monthlyKey = string.IsNullOrEmpty(state.SeasonId) ? SeasonClock.MonthlyKey(now) : state.SeasonId;
         DateTime seasonMonth = ParseSeasonMonth(monthlyKey, now);
-        TrackProgress progress = ComputeTrackProgress(state.TrackXp);
+        TrackProgress progress = ComputeTrackProgress(state);
 
         return new BattlePassStatus
         {
             SeasonId = monthlyKey,
             SeasonName = SeasonClock.SeasonName(seasonMonth),
+            SeasonThemeId = catalog.ThemeFor(monthlyKey).Id,
+            SeasonThemeName = catalog.ThemeFor(monthlyKey).Name,
+            SeasonThemeBlurb = catalog.ThemeFor(monthlyKey).Blurb,
             DaysRemaining = SeasonClock.DaysRemainingInMonth(now),
             Tickets = state.Tickets,
             LastDailyReset = state.DailyKey,
@@ -1224,6 +1348,8 @@ public class BattlePassService(
             LastMonthlyReset = state.MonthlyKey,
             LastCrateSeasonId = state.LastCrateSeasonId,
             LastCrateTickets = state.LastCrateTickets,
+            LastCrateGrade = CrateGradeName(state.LastCrateTickets),
+            CratePreview = BuildCratePreview(state.Tickets, monthlyKey),
             Challenges = state.Challenges,
             Shop = state.Shop,
             Debug = catalog.Config.DebugGrants,
@@ -1379,13 +1505,13 @@ public class BattlePassService(
 
     private bool GrantTrackRewards(MongoId sessionId, BattlePassProfileState state)
     {
-        IReadOnlyList<TrackTier> tiers = catalog.Track;
+        IReadOnlyList<TrackTier> tiers = TrackFor(state);
         if (tiers.Count == 0)
         {
             return false;
         }
 
-        int reached = ComputeTrackProgress(state.TrackXp).Level;
+        int reached = ComputeTrackProgress(state).Level;
         bool mailed = false;
         foreach (TrackTier tier in tiers)
         {
@@ -1455,7 +1581,7 @@ public class BattlePassService(
     private List<TrackTierStatus> BuildTrackStatus(BattlePassProfileState state, int reached)
     {
         var rows = new List<TrackTierStatus>();
-        foreach (TrackTier tier in catalog.Track)
+        foreach (TrackTier tier in TrackFor(state))
         {
             rows.Add(new TrackTierStatus
             {
@@ -1504,11 +1630,11 @@ public class BattlePassService(
         return reward.Tpl ?? "Reward";
     }
 
-    private TrackProgress ComputeTrackProgress(int xp)
+    private TrackProgress ComputeTrackProgress(BattlePassProfileState state)
     {
-        IReadOnlyList<TrackTier> tiers = catalog.Track;
+        IReadOnlyList<TrackTier> tiers = TrackFor(state);
         int max = tiers.Count == 0 ? 0 : tiers[^1].Level;
-        int remaining = Math.Max(0, xp);
+        int remaining = Math.Max(0, state.TrackXp);
         int level = 0;
         foreach (TrackTier tier in tiers)
         {

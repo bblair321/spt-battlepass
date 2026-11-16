@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <OutputType>Library</OutputType>
-    <Version>0.3.0</Version>
+    <Version>0.4.0</Version>
     <AssemblyName>SptBattlePass</AssemblyName>
     <OutputPath>bin\$(Configuration)\com.bblai.battlepass\</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
@@ -30,7 +30,7 @@
     <MakeDir Directories="$(SptServerModsPath)\com.bblai.battlepass\db" />
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(SptServerModsPath)\com.bblai.battlepass" SkipUnchangedFiles="true" />
     <Copy SourceFiles="$(TargetDir)$(TargetName).pdb" DestinationFolder="$(SptServerModsPath)\com.bblai.battlepass" SkipUnchangedFiles="true" Condition="Exists('$(TargetDir)$(TargetName).pdb')" />
-    <Copy SourceFiles="@(_BattlePassDb)" DestinationFolder="$(SptServerModsPath)\com.bblai.battlepass\db" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(_BattlePassDb)" DestinationFiles="@(_BattlePassDb->'$(SptServerModsPath)\com.bblai.battlepass\db\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
   </Target>
 
 </Project>

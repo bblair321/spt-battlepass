@@ -37,14 +37,14 @@ public class ShopDelivery(
         return "mail";
     }
 
-    public bool DeliverMail(MongoId sessionId, string message, IReadOnlyList<(string Tpl, int Count)> contents)
+    public bool DeliverMail(MongoId sessionId, string message, IReadOnlyList<(string Tpl, int Count, bool Preset)> contents)
     {
         var items = new List<Item>();
-        foreach ((string tpl, int count) in contents)
+        foreach ((string tpl, int count, bool preset) in contents)
         {
             try
             {
-                items.AddRange(BuildItems(tpl, count));
+                items.AddRange(preset ? BuildPreset(tpl, count) : BuildItems(tpl, count));
             }
             catch (Exception exception)
             {

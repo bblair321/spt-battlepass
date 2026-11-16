@@ -21,4 +21,10 @@ public sealed class CrateOffer
 
     [JsonPropertyName("max")]
     public int Max { get; set; } = 1;
+
+    [JsonPropertyName("minTickets")]
+    public int MinTickets { get; set; }
+
+    [JsonPropertyName("preset")]
+    public bool Preset { get; set; }
 }

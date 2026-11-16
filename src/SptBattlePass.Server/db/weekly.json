@@ -48,8 +48,13 @@
   { "id": "w_survive_day_4", "name": "Daylight circuit", "description": "Survive 4 daytime raids this week.", "type": "SurviveDay", "target": 4, "ticketReward": 4 },
   { "id": "w_fir_bolts", "name": "Bolt haul", "description": "Extract with 15 bolts found in raid this week.", "type": "FindInRaid", "target": 15, "ticketReward": 4, "tpl": "57347c5b245977448d35f6e1" },
   { "id": "w_fir_ifak", "name": "Med haul", "description": "Extract with 3 IFAKs found in raid this week.", "type": "FindInRaid", "target": 3, "ticketReward": 4, "tpl": "590c678286f77426c9660122" },
-  { "id": "w_fir_tape", "name": "Tape haul", "description": "Extract with 4 insulating tape found in raid this week.", "type": "FindInRaid", "target": 4, "ticketReward": 4, "tpl": "56742c284bdc2d98058b456d" },
+  { "id": "w_fir_tape", "name": "Tape haul", "description": "Extract with 4 insulating tape found in raid this week.", "type": "FindInRaid", "target": 4, "ticketReward": 4, "tpl": "5734795124597738002c6176" },
   { "id": "w_handover_ifak", "name": "Aid station", "description": "Turn in 4 IFAKs from stash.", "type": "HandOver", "target": 4, "ticketReward": 4, "tpl": "590c678286f77426c9660122" },
   { "id": "w_handover_bolts", "name": "Workbench", "description": "Turn in 20 bolts from stash.", "type": "HandOver", "target": 20, "ticketReward": 4, "tpl": "57347c5b245977448d35f6e1" },
-  { "id": "w_handover_bandage", "name": "Gauze run", "description": "Turn in 8 aseptic bandages from stash.", "type": "HandOver", "target": 8, "ticketReward": 4, "tpl": "544fb25a4bdc2dfb738b4567" }
+  { "id": "w_handover_bandage", "name": "Gauze run", "description": "Turn in 8 aseptic bandages from stash.", "type": "HandOver", "target": 8, "ticketReward": 4, "tpl": "544fb25a4bdc2dfb738b4567" },
+  { "id": "w_kill_tagilla", "name": "Hammer week", "description": "Kill Tagilla this week.", "type": "KillBoss", "target": 1, "ticketReward": 4, "boss": "tagilla" },
+  { "id": "w_extract_zb1011", "name": "Bunker exit", "description": "Extract from Customs through ZB-1011 twice.", "type": "ExtractNamed", "target": 2, "ticketReward": 4, "extract": "ZB-1011", "map": "bigmap" },
+  { "id": "w_fir_electronics", "name": "Circuit haul", "description": "Extract with 4 electronics found in raid this week.", "type": "FindInRaidCategory", "target": 4, "ticketReward": 4, "parent": "electronics" },
+  { "id": "w_extract_labyrinth_2", "name": "Labyrinth circuit", "description": "Extract from The Labyrinth 2 times.", "type": "ExtractMap", "target": 2, "ticketReward": 4, "map": "labyrinth" },
+  { "id": "w_extract_terminal_2", "name": "Terminal circuit", "description": "Extract from Terminal 2 times.", "type": "ExtractMap", "target": 2, "ticketReward": 4, "map": "terminal" }
 ]

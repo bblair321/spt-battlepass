@@ -45,5 +45,9 @@
   { "id": "m_fir_hdd", "name": "Drive run", "description": "Extract with 4 damaged hard drives found in raid this month.", "type": "FindInRaid", "target": 4, "ticketReward": 10, "tpl": "590a386e86f77429692b27ab" },
   { "id": "m_handover_bolts", "name": "Workshop month", "description": "Turn in 40 bolts from stash.", "type": "HandOver", "target": 40, "ticketReward": 10, "tpl": "57347c5b245977448d35f6e1" },
   { "id": "m_handover_salewa", "name": "Trauma month", "description": "Turn in 3 Salewas from stash.", "type": "HandOver", "target": 3, "ticketReward": 10, "tpl": "544fb45d4bdc2dee738b4568" },
-  { "id": "m_handover_tape", "name": "Tape month", "description": "Turn in 8 insulating tape from stash.", "type": "HandOver", "target": 8, "ticketReward": 10, "tpl": "56742c284bdc2d98058b456d" }
+  { "id": "m_handover_tape", "name": "Tape month", "description": "Turn in 8 insulating tape from stash.", "type": "HandOver", "target": 8, "ticketReward": 10, "tpl": "5734795124597738002c6176" },
+  { "id": "m_kill_reshala", "name": "Dorm boss", "description": "Kill Reshala this month.", "type": "KillBoss", "target": 1, "ticketReward": 10, "boss": "bully" },
+  { "id": "m_fir_meds", "name": "Field pharmacy", "description": "Extract with 8 medical items found in raid this month.", "type": "FindInRaidCategory", "target": 8, "ticketReward": 10, "parent": "meds" },
+  { "id": "m_extract_labyrinth_3", "name": "Labyrinth regular", "description": "Extract from The Labyrinth 3 times this month.", "type": "ExtractMap", "target": 3, "ticketReward": 10, "map": "labyrinth" },
+  { "id": "m_extract_terminal_3", "name": "Terminal regular", "description": "Extract from Terminal 3 times this month.", "type": "ExtractMap", "target": 3, "ticketReward": 10, "map": "terminal" }
 ]

@@ -60,9 +60,9 @@ public static class BattlePassApi
                ?? JsonConvert.DeserializeObject<RaidEndResultDto>(data.ToString());
     }
 
-    public static async Task<BuyResultDto> BuyAsync(string offerId)
+    public static async Task<BuyResultDto> BuyAsync(string offerId, int count = 1)
     {
-        string payload = JsonConvert.SerializeObject(new { id = offerId });
+        string payload = JsonConvert.SerializeObject(new { id = offerId, count });
         string json = await RequestHandler.PostJsonAsync(BuyRoute, payload);
         if (string.IsNullOrWhiteSpace(json))
         {

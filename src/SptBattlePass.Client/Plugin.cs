@@ -16,7 +16,7 @@ using UnityEngine.UI;
 
 namespace SptBattlePass.Client;
 
-[BepInPlugin("com.bblai.battlepass", "SPT Battle Pass", "0.3.0")]
+[BepInPlugin("com.bblai.battlepass", "SPT Battle Pass", "0.4.0")]
 [BepInDependency(FikaCompat.PluginGuid, BepInDependency.DependencyFlags.SoftDependency)]
 public class Plugin : BaseUnityPlugin
 {
@@ -105,7 +105,9 @@ public class Plugin : BaseUnityPlugin
             WeaponScavKills = RaidProgress.CopyWeaponScavKills(),
             WeaponPmcKills = RaidProgress.CopyWeaponPmcKills(),
             WeaponHeadshots = RaidProgress.CopyWeaponHeadshots(),
-            FirItems = RaidProgress.CopyFirItems()
+            FirItems = RaidProgress.CopyFirItems(),
+            Extract = RaidProgress.ExtractName,
+            BossKillsNamed = RaidProgress.CopyNamedBosses()
         };
         RaidProgress.End();
         _raidWidget.Hide();
@@ -357,15 +359,15 @@ public class Plugin : BaseUnityPlugin
         }
     }
 
-    public void BuyOffer(string offerId)
+    public void BuyOffer(string offerId, int count = 1)
     {
-        StartCoroutine(BuyOfferCoroutine(offerId));
+        StartCoroutine(BuyOfferCoroutine(offerId, count));
     }
 
-    private IEnumerator BuyOfferCoroutine(string offerId)
+    private IEnumerator BuyOfferCoroutine(string offerId, int count)
     {
         _panel.SetBuying(true);
-        Task<BuyResultDto> task = BattlePassApi.BuyAsync(offerId);
+        Task<BuyResultDto> task = BattlePassApi.BuyAsync(offerId, count);
         while (!task.IsCompleted)
         {
             yield return null;
@@ -395,7 +397,8 @@ public class Plugin : BaseUnityPlugin
 
         SoundUtil.Play("QuestTurnedIn", "InsuranceItemReturnedToStash", "Ready");
         string name = string.IsNullOrEmpty(result.OfferName) ? "Item" : result.OfferName;
-        _panel.SetShopNotice($"{name} sent to Messages. Collect it from the SYSTEM chat.");
+        string qty = result.Quantity > 1 ? $"{result.Quantity}x " : "";
+        _panel.SetShopNotice($"{qty}{name} sent to Messages. Collect it from the SYSTEM chat.");
     }
 
     public void GrantTickets()

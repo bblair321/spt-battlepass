@@ -11,6 +11,15 @@ public sealed class BattlePassStatusDto
     [JsonProperty("seasonName")]
     public string SeasonName { get; set; }
 
+    [JsonProperty("seasonThemeId")]
+    public string SeasonThemeId { get; set; }
+
+    [JsonProperty("seasonThemeName")]
+    public string SeasonThemeName { get; set; }
+
+    [JsonProperty("seasonThemeBlurb")]
+    public string SeasonThemeBlurb { get; set; }
+
     [JsonProperty("daysRemaining")]
     public int DaysRemaining { get; set; }
 
@@ -28,6 +37,12 @@ public sealed class BattlePassStatusDto
 
     [JsonProperty("lastCrateTickets")]
     public int LastCrateTickets { get; set; }
+
+    [JsonProperty("lastCrateGrade")]
+    public string LastCrateGrade { get; set; }
+
+    [JsonProperty("cratePreview")]
+    public CratePreviewDto CratePreview { get; set; }
 
     [JsonProperty("debug")]
     public bool Debug { get; set; }
@@ -188,6 +203,15 @@ public sealed class BattlePassChallengeDto
     [JsonProperty("tpl")]
     public string Tpl { get; set; }
 
+    [JsonProperty("parent")]
+    public string Parent { get; set; }
+
+    [JsonProperty("boss")]
+    public string Boss { get; set; }
+
+    [JsonProperty("extract")]
+    public string Extract { get; set; }
+
     [JsonProperty("timeOfDay")]
     public string TimeOfDay { get; set; }
 }
@@ -233,8 +257,38 @@ public sealed class BuyResultDto
     [JsonProperty("offerName")]
     public string OfferName { get; set; }
 
+    [JsonProperty("quantity")]
+    public int Quantity { get; set; }
+
     [JsonProperty("status")]
     public BattlePassStatusDto Status { get; set; }
+}
+
+public sealed class CratePreviewDto
+{
+    [JsonProperty("grade")]
+    public string Grade { get; set; }
+
+    [JsonProperty("tickets")]
+    public int Tickets { get; set; }
+
+    [JsonProperty("items")]
+    public List<CratePreviewItemDto> Items { get; set; }
+}
+
+public sealed class CratePreviewItemDto
+{
+    [JsonProperty("name")]
+    public string Name { get; set; }
+
+    [JsonProperty("tpl")]
+    public string Tpl { get; set; }
+
+    [JsonProperty("count")]
+    public int Count { get; set; }
+
+    [JsonProperty("preset")]
+    public bool Preset { get; set; }
 }
 
 public sealed class GrantResultDto

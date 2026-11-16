@@ -44,7 +44,7 @@ public sealed class ModConfig
     public int PremiumCostRoubles { get; set; } = 750000;
 
     [JsonPropertyName("trackXpDaily")]
-    public int TrackXpDaily { get; set; } = 8;
+    public int TrackXpDaily { get; set; } = 10;
 
     [JsonPropertyName("trackXpWeekly")]
     public int TrackXpWeekly { get; set; } = 25;
@@ -58,4 +58,8 @@ public sealed class ModConfig
     /// <summary>Bump this when shop/track/crate/challenge pools change so live profiles restock the shop.</summary>
     [JsonPropertyName("catalogVersion")]
     public int CatalogVersion { get; set; } = 0;
+
+    /// <summary>Maps yyyy-MM season ids to a folder under db/themes/. Missing months use the root shop/track/crate.</summary>
+    [JsonPropertyName("seasonThemes")]
+    public Dictionary<string, string> SeasonThemes { get; set; } = [];
 }

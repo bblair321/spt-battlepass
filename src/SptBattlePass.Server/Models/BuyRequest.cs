@@ -7,6 +7,9 @@ public sealed class BuyRequest : IRequestData
 {
     [JsonPropertyName("id")]
     public string Id { get; set; } = "";
+
+    [JsonPropertyName("count")]
+    public int Count { get; set; } = 1;
 }
 
 public sealed class BuyResult
@@ -22,6 +25,9 @@ public sealed class BuyResult
 
     [JsonPropertyName("offerName")]
     public string? OfferName { get; set; }
+
+    [JsonPropertyName("quantity")]
+    public int Quantity { get; set; }
 
     [JsonPropertyName("status")]
     public BattlePassStatus? Status { get; set; }

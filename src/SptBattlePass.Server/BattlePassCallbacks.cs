@@ -36,7 +36,7 @@ public class BattlePassCallbacks(ISptLogger<BattlePassCallbacks> logger, HttpRes
     public async ValueTask<string> HandleBuy(string url, BuyRequest info, MongoId sessionId)
     {
         logger.Info($"[BattlePass] {BuyRoute} session={sessionId} offer={info.Id}");
-        BuyResult result = await battlePassService.BuyAsync(sessionId, info.Id ?? "");
+        BuyResult result = await battlePassService.BuyAsync(sessionId, info.Id ?? "", info.Count);
         return httpResponseUtil.GetBody(result);
     }
 

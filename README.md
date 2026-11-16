@@ -6,7 +6,7 @@ Combination mod for **SPT 4.1.x**: daily / weekly / monthly challenges → paper
 
 Requires **SPT 4.1.x** (built against 4.1.4).
 
-1. Download `SPT-BattlePass-0.3.0.zip` from [Releases](https://github.com/bblair321/spt-battlepass/releases).
+1. Download `SPT-BattlePass-0.4.0.zip` from [Releases](https://github.com/bblair321/spt-battlepass/releases).
 2. Extract into your SPT folder so you get:
    - `SPT_Runtime/user/mods/com.bblai.battlepass/`
    - `BepInEx/plugins/com.bblai.battlepass/`
@@ -17,10 +17,10 @@ Fika: put the **server** mod on the host and the **client** plugin on every play
 ## Loop
 
 - 3 dailies, 3 weeklies, 3 monthlies rolled per period (UTC day / ISO week / calendar month).
-- Completing challenges also fills a **10-level track**. The current season is an **early-wipe kit** (keys, meds, budget guns, hideout parts). Free rewards always pay; premium rewards unlock after a **750,000 ₽** stash purchase (once per month).
+- Completing challenges also fills a **10-level track**. Each UTC month can load a different **season theme** (early / mid / late wipe kits). Free rewards always pay; premium rewards unlock after a **750,000 ₽** stash purchase (once per month). A full month of challenges now grants enough pass XP to finish the track.
 - Tickets live on the profile, not in stash.
 - Buy sends items to **Messages → SYSTEM**. Collect them into stash from there.
-- Unspent tickets at month rollover convert to a consolation crate, also mailed to SYSTEM.
+- Unspent tickets at month rollover convert to a leftover crate mailed to SYSTEM. More leftover tickets unlock a better crate (consolation kit → supply crate → stash crate → season cache). The Season tab previews what your current tickets would convert to if the month ended now.
 - Challenges never appear in vanilla Tasks.
 
 ## Layout
@@ -54,7 +54,7 @@ Restart **both** the SPT server and the game after a build. Copy fails if `SPT.S
 - Open **Character** (Gear / Health / Skills / Tasks). **BATTLE PASS** is the extra tab on the right, with a punched-ticket icon (not the Weekend Drops crate). Ticket count is in the panel header.
 - **Challenges**, **Track**, **Exchange**, **Season**, and **Settings** are the five views. Esc, Close, or a click on the dim backdrop dismisses the panel. Each view keeps its own scroll position. Exchange search and category chips stay pinned above the list. Challenges lists in-progress first and dims completed cards. Exchange is a two-column grid.
 - **Track** is a free/premium reward ladder. Pass XP is separate from PMC XP. Buying premium mid-month mails premium rewards for levels you already reached. Item rewards go to **Messages → SYSTEM**.
-- **Exchange** has a search box, category chips (including **KEYS**), and **CAN AFFORD**. CLEAR resets the filters. Ammo matches the shop guns (9x18 / 9x19 / 12/70 / 7.62x39 / 7.62x54R / 5.45 / 5.56). Marked keys are not sold.
+- **Exchange** has a search box, category chips (including **KEYS** and **ARMOR**), and **CAN AFFORD**. CLEAR resets the filters. Use **− / +** to buy up to 10 of a stack (or remaining stock). Hover an item icon for a quick inspect. Marked keys are not sold.
 - **Season** tracks this month’s completions, tickets earned/spent, leftover-crate mail, and lifetime totals. The header bar is monthly-challenge progress (`1 / 3`).
 - After a raid, a left-side card on the results screen lists what moved and tickets earned.
 - In raid, a top-right widget shows live progress. **F8** toggles it (rebind `InRaidWidgetKey` in BepInEx config). Finishing a challenge pops a toast. **PIN** a challenge on the Challenges tab to keep it at the top of the widget even on the wrong map. Turn the widget, toasts, raid-results card, and UI sounds on or off under **Settings**.
@@ -64,9 +64,10 @@ Restart **both** the SPT server and the game after a build. Copy fails if `SPT.S
 Edit JSON under `db/` (copied next to the server DLL):
 
 - `daily.json` / `weekly.json` / `monthly.json` — challenge pools
-- `shop.json` / `crate.json` — exchange and season-end crate. Set `"preset": true` on a weapon tpl to mail the **default assembled build**, not a stripped receiver.
+- `shop.json` / `crate.json` — default exchange and season-end crate. Set `"preset": true` on a weapon tpl to mail the **default assembled build**, not a stripped receiver. Crate rows can set `"minTickets"` so that item only appears when leftover tickets reach that band.
+- `db/themes/<id>/` — optional monthly kits (`shop.json`, `track.json`, `crate.json`, `theme.json`). `config.json` `seasonThemes` maps `yyyy-MM` to a theme id (`2026-11` → `mid-wipe`). Months with no mapping use the root files.
 - `track.json` — 10-level free/premium rewards. `"xp"` is the pass XP needed for that level. A reward is `"tickets": N` and/or an item `{ "name", "tpl", "count", "preset?" }`.
-- `config.json` — `debugGrants`, `grantAmount`, `catalogVersion`, reroll costs/limits, challenges per set, monthly bonus, XP per completed daily/weekly/monthly (`xpDaily` / `xpWeekly` / `xpMonthly`) plus `xpMonthlyBonus` when every monthly is done. Pass-track XP is `trackXpDaily` / `trackXpWeekly` / `trackXpMonthly` / `trackXpMonthlyBonus`. Premium costs `premiumCostRoubles` (stash roubles). Set any XP field to `0` to disable it. Bump `catalogVersion` when you change the shop so live profiles restock instead of merging old offers.
+- `config.json` — `debugGrants`, `grantAmount`, `catalogVersion`, reroll costs/limits, challenges per set, monthly bonus, XP per completed daily/weekly/monthly (`xpDaily` / `xpWeekly` / `xpMonthly`) plus `xpMonthlyBonus` when every monthly is done. Pass-track XP is `trackXpDaily` (10) / `trackXpWeekly` / `trackXpMonthly` / `trackXpMonthlyBonus`. Premium costs `premiumCostRoubles` (stash roubles). Set any XP field to `0` to disable it. Bump `catalogVersion` when you change the shop so live profiles restock instead of merging old offers. The server logs unknown item tpls on load.
 
 Completing a challenge grants **PMC XP** immediately at raid end (not mail). In-raid toasts preview that XP; the raid-results card shows the confirmed amount. Vanilla Tarkov UI sounds play on panel open/close, buys, rerolls, toasts, and raid feedback.
 
@@ -78,7 +79,9 @@ Daily reroll costs **1 ticket** (3 max per day). Weekly reroll costs **2** (1 ma
 - New challenge rows appear on the next daily / weekly / monthly reset, not mid-period. Each rolled set prefers mixed types (kill / extract / loot) so you do not get three scav hunts. Weapon-class challenges (`KillWeapon`, `KillScavsWeapon`, `KillPmcsWeapon`, `HeadshotWeapon`) use Tarkov `WeapClass` values like `pistol`, `smg`, `shotgun`, `assaultRifle`, `assaultCarbine`, `sniperRifle`.
 - `KillMelee` / `KillGrenade` count lethal melee and grenade/explosion kills.
 - `SurviveNight` / `SurviveDay` use the raid's time of day. Any challenge can also set `"timeOfDay": "night"` or `"day"`.
-- `FindInRaid` counts FIR items of `"tpl"` you extract with (you keep them). `HandOver` is a **TURN IN** on the challenge card and removes items from stash.
+- `FindInRaid` counts FIR items of `"tpl"` you extract with (you keep them). `FindInRaidCategory` counts FIR items under a parent (`"parent": "medkit"` / `electronics` / `barter` / `meds` / `drugs` / `building` / `info`, or a raw parent tpl). `HandOver` is a **TURN IN** on the challenge card and removes items from stash.
+- `KillBoss` uses `"boss": "killa"` (also `tagilla`, `bully` for Reshala, or a full `bossKilla` role).
+- `ExtractNamed` uses `"extract": "Dorms V-Ex"` (or `ZB-1011`, etc.). Labyrinth and Terminal maps are `labyrinth` and `terminal`.
 
 ## Fika / coop
 

@@ -64,14 +64,19 @@
   { "id": "d_survive_2_day", "name": "Two daylight", "description": "Survive 2 daytime raids.", "type": "SurviveDay", "target": 2, "ticketReward": 1 },
   { "id": "d_survive_factory_night", "name": "Night shift", "description": "Survive a night raid.", "type": "SurviveNight", "target": 1, "ticketReward": 1 },
   { "id": "d_fir_nuts", "name": "Loose hardware", "description": "Extract with 5 screw nuts found in raid.", "type": "FindInRaid", "target": 5, "ticketReward": 1, "tpl": "57347c77245977448d35f6e2" },
-  { "id": "d_fir_tape", "name": "Wrap it up", "description": "Extract with 2 insulating tape found in raid.", "type": "FindInRaid", "target": 2, "ticketReward": 1, "tpl": "56742c284bdc2d98058b456d" },
+  { "id": "d_fir_tape", "name": "Wrap it up", "description": "Extract with 2 insulating tape found in raid.", "type": "FindInRaid", "target": 2, "ticketReward": 1, "tpl": "5734795124597738002c6176" },
   { "id": "d_fir_analgin", "name": "Pain haul", "description": "Extract with 3 Analgin found in raid.", "type": "FindInRaid", "target": 3, "ticketReward": 1, "tpl": "544fb37f4bdc2dee738b4567" },
   { "id": "d_fir_water", "name": "Stay hydrated", "description": "Extract with 2 emergency water found in raid.", "type": "FindInRaid", "target": 2, "ticketReward": 1, "tpl": "60098b1705871270cd5352a1" },
-  { "id": "d_fir_nails", "name": "Nail run", "description": "Extract with 2 packs of nails found in raid.", "type": "FindInRaid", "target": 2, "ticketReward": 1, "tpl": "59e358a886f7741776641ac3" },
+  { "id": "d_fir_nails", "name": "Nail run", "description": "Extract with 2 packs of nails found in raid.", "type": "FindInRaid", "target": 2, "ticketReward": 1, "tpl": "590c31c586f774245e3141b2" },
   { "id": "d_handover_ifak", "name": "Clinic drop", "description": "Turn in 2 IFAKs from stash.", "type": "HandOver", "target": 2, "ticketReward": 1, "tpl": "590c678286f77426c9660122" },
   { "id": "d_handover_bolts", "name": "Workshop drop", "description": "Turn in 8 bolts from stash.", "type": "HandOver", "target": 8, "ticketReward": 1, "tpl": "57347c5b245977448d35f6e1" },
   { "id": "d_handover_water", "name": "Canteen drop", "description": "Turn in 3 emergency water from stash.", "type": "HandOver", "target": 3, "ticketReward": 1, "tpl": "60098b1705871270cd5352a1" },
   { "id": "d_handover_analgin", "name": "Pill drop", "description": "Turn in 4 Analgin from stash.", "type": "HandOver", "target": 4, "ticketReward": 1, "tpl": "544fb37f4bdc2dee738b4567" },
   { "id": "d_kill_scavs_factory_6", "name": "Shop floor", "description": "Kill 6 scavs on Factory.", "type": "KillScavsMap", "target": 6, "ticketReward": 1, "map": "factory4" },
-  { "id": "d_extract_customs_night", "name": "Night Customs", "description": "Extract from Customs during a night raid.", "type": "ExtractMap", "target": 1, "ticketReward": 1, "map": "bigmap", "timeOfDay": "night" }
+  { "id": "d_extract_customs_night", "name": "Night Customs", "description": "Extract from Customs during a night raid.", "type": "ExtractMap", "target": 1, "ticketReward": 1, "map": "bigmap", "timeOfDay": "night" },
+  { "id": "d_kill_killa", "name": "Interchange royalty", "description": "Kill Killa.", "type": "KillBoss", "target": 1, "ticketReward": 1, "boss": "killa" },
+  { "id": "d_extract_dorms_vex", "name": "Dorms taxi", "description": "Extract from Customs through Dorms V-Ex.", "type": "ExtractNamed", "target": 1, "ticketReward": 1, "extract": "Dorms V-Ex", "map": "bigmap" },
+  { "id": "d_fir_medkit", "name": "Med bag", "description": "Extract with 2 medkits found in raid (IFAK, Salewa, AFAK, ...).", "type": "FindInRaidCategory", "target": 2, "ticketReward": 1, "parent": "medkit" },
+  { "id": "d_extract_labyrinth", "name": "Leave The Labyrinth", "description": "Survive and extract from The Labyrinth.", "type": "ExtractMap", "target": 1, "ticketReward": 1, "map": "labyrinth" },
+  { "id": "d_extract_terminal", "name": "Leave Terminal", "description": "Survive and extract from Terminal.", "type": "ExtractMap", "target": 1, "ticketReward": 1, "map": "terminal" }
 ]

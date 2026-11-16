@@ -64,4 +64,10 @@ public sealed class RaidEndRequest : IRequestData
 
     [JsonPropertyName("firItems")]
     public Dictionary<string, int> FirItems { get; set; } = [];
+
+    [JsonPropertyName("extract")]
+    public string Extract { get; set; } = "";
+
+    [JsonPropertyName("bossKillsNamed")]
+    public Dictionary<string, int> BossKillsNamed { get; set; } = [];
 }

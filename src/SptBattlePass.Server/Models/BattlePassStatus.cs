@@ -10,6 +10,15 @@ public sealed class BattlePassStatus
     [JsonPropertyName("seasonName")]
     public string SeasonName { get; set; } = "";
 
+    [JsonPropertyName("seasonThemeId")]
+    public string SeasonThemeId { get; set; } = "";
+
+    [JsonPropertyName("seasonThemeName")]
+    public string SeasonThemeName { get; set; } = "";
+
+    [JsonPropertyName("seasonThemeBlurb")]
+    public string SeasonThemeBlurb { get; set; } = "";
+
     [JsonPropertyName("daysRemaining")]
     public int DaysRemaining { get; set; }
 
@@ -30,6 +39,12 @@ public sealed class BattlePassStatus
 
     [JsonPropertyName("lastCrateTickets")]
     public int LastCrateTickets { get; set; }
+
+    [JsonPropertyName("lastCrateGrade")]
+    public string LastCrateGrade { get; set; } = "";
+
+    [JsonPropertyName("cratePreview")]
+    public CratePreview CratePreview { get; set; } = new();
 
     [JsonPropertyName("challenges")]
     public BattlePassChallenges Challenges { get; set; } = new();
@@ -197,6 +212,15 @@ public sealed class BattlePassChallenge
 
     [JsonPropertyName("tpl")]
     public string? Tpl { get; set; }
+
+    [JsonPropertyName("parent")]
+    public string? Parent { get; set; }
+
+    [JsonPropertyName("boss")]
+    public string? Boss { get; set; }
+
+    [JsonPropertyName("extract")]
+    public string? Extract { get; set; }
 
     [JsonPropertyName("timeOfDay")]
     public string? TimeOfDay { get; set; }

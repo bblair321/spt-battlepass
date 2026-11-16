@@ -33,6 +33,18 @@ public sealed class ChallengeTemplate
     [JsonPropertyName("tpl")]
     public string? Tpl { get; set; }
 
+    /// <summary>Parent tpl or alias (medkit, electronics, barter, ...) for FindInRaidCategory.</summary>
+    [JsonPropertyName("parent")]
+    public string? Parent { get; set; }
+
+    /// <summary>Boss role for KillBoss (killa, bossKilla, tagilla, ...).</summary>
+    [JsonPropertyName("boss")]
+    public string? Boss { get; set; }
+
+    /// <summary>Extract display name for ExtractNamed (Dorms V-Ex, ZB-1011, ...).</summary>
+    [JsonPropertyName("extract")]
+    public string? Extract { get; set; }
+
     /// <summary>day or night. When set, the raid TOD must match.</summary>
     [JsonPropertyName("timeOfDay")]
     public string? TimeOfDay { get; set; }

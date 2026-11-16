@@ -24,13 +24,28 @@ public sealed class RaidResultPatch : ModulePatch
     }
 
     [PatchPostfix]
-    private static void PatchPostfix(ExitStatus __3)
+    private static void PatchPostfix(object[] __args, ExitStatus __3)
     {
         try
         {
             if (!FikaCompat.ShouldRunClient)
             {
                 return;
+            }
+
+            if (__args != null)
+            {
+                foreach (object arg in __args)
+                {
+                    if (arg is string text
+                        && text.Length > 1
+                        && text.Length < 80
+                        && text.IndexOf('/') < 0
+                        && text.IndexOf('\\') < 0)
+                    {
+                        RaidProgress.SetExtract(text);
+                    }
+                }
             }
 
             bool survived = __3 == ExitStatus.Survived || __3 == ExitStatus.Runner;

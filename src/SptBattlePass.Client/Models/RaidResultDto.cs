@@ -64,4 +64,10 @@ public sealed class RaidResultDto
 
     [JsonProperty("firItems")]
     public Dictionary<string, int> FirItems { get; set; }
+
+    [JsonProperty("extract")]
+    public string Extract { get; set; }
+
+    [JsonProperty("bossKillsNamed")]
+    public Dictionary<string, int> BossKillsNamed { get; set; }
 }

@@ -33,6 +33,10 @@ public sealed class BattlePassPanel
     private string _shopQuery = "";
     private string _shopCategory = "";
     private bool _shopAffordableOnly;
+    private readonly Dictionary<string, int> _buyQty = new Dictionary<string, int>(StringComparer.Ordinal);
+    private string _hoverTpl;
+    private string _hoverCaption;
+    private Vector2 _hoverMouse;
     private GUIStyle _title;
     private GUIStyle _header;
     private GUIStyle _body;
@@ -101,6 +105,7 @@ public sealed class BattlePassPanel
         _error = null;
         PrefetchShopIcons();
         PrefetchTrackIcons();
+        PrefetchCratePreviewIcons();
     }
 
     public void SetError(string message)
@@ -133,6 +138,8 @@ public sealed class BattlePassPanel
         }
 
         EnsureStyles();
+        _hoverTpl = null;
+        _hoverCaption = null;
         float scale = Mathf.Max(0.75f, Screen.height / 1080f);
         float width = Mathf.Min(Screen.width - 80f, 1240f * scale);
         float height = Mathf.Min(Screen.height - 80f, 900f * scale);
@@ -168,6 +175,13 @@ public sealed class BattlePassPanel
 
         string season = _status?.SeasonName ?? "Loading season...";
         GUILayout.Label(season, _header);
+        if (!string.IsNullOrEmpty(_status?.SeasonThemeName))
+        {
+            string blurb = string.IsNullOrEmpty(_status.SeasonThemeBlurb)
+                ? _status.SeasonThemeName
+                : $"{_status.SeasonThemeName} — {_status.SeasonThemeBlurb}";
+            GUILayout.Label(blurb, _small);
+        }
         if (_status != null)
         {
             DrawSeasonStrip(_status);
@@ -176,7 +190,8 @@ public sealed class BattlePassPanel
 
         if (_status != null && _status.LastCrateTickets > 0)
         {
-            GUILayout.Label($"Unspent tickets from {_status.LastCrateSeasonId} were mailed as a consolation crate.", _small);
+            string grade = string.IsNullOrEmpty(_status.LastCrateGrade) ? "crate" : _status.LastCrateGrade;
+            GUILayout.Label($"Unspent tickets from {_status.LastCrateSeasonId} were mailed as a {grade}.", _small);
         }
 
         if (!string.IsNullOrEmpty(_shopNotice))
@@ -255,6 +270,7 @@ public sealed class BattlePassPanel
         }
 
         GUILayout.EndArea();
+        DrawItemInspect();
     }
 
     private void DrawHeader()
@@ -496,7 +512,7 @@ public sealed class BattlePassPanel
                 : Color.white;
         if (!string.IsNullOrEmpty(reward.Tpl))
         {
-            DrawItemIcon(reward.Tpl, 48f, tint);
+            DrawItemIcon(reward.Tpl, 48f, tint, reward.Name);
         }
         else
         {
@@ -554,6 +570,9 @@ public sealed class BattlePassPanel
         GUILayout.Space(8f);
         DrawMetric("ON HAND", status.Tickets.ToString());
         GUILayout.EndHorizontal();
+        GUILayout.Space(6f);
+        GUILayout.Label("Unspent tickets convert at month end. More leftover tickets mail a better crate.", _small);
+        DrawCratePreview(status.CratePreview, status.Tickets);
         GUILayout.Space(8f);
         DrawStatRow("Challenges completed", status.ChallengesCompletedSeason.ToString());
         DrawStatRow("Daily", status.DailyCompletedSeason.ToString());
@@ -588,7 +607,8 @@ public sealed class BattlePassPanel
             DrawStatRow("Tickets earned", status.LastSeasonTicketsEarned.ToString());
             if (status.LastCrateTickets > 0)
             {
-                DrawStatRow("Leftover crate", $"{status.LastCrateTickets} tickets mailed");
+                string grade = string.IsNullOrEmpty(status.LastCrateGrade) ? "crate" : status.LastCrateGrade;
+                DrawStatRow("Leftover crate", $"{status.LastCrateTickets} tickets → {grade}");
             }
 
             GUILayout.EndVertical();
@@ -1017,7 +1037,7 @@ public sealed class BattlePassPanel
 
         GUILayout.BeginVertical(_cardStyle, GUILayout.Width(width));
         GUILayout.BeginHorizontal();
-        DrawItemIcon(offer.Tpl, 52f, iconTint);
+        DrawItemIcon(offer.Tpl, 52f, iconTint, offer.Name);
         GUILayout.Space(8f);
         GUILayout.BeginVertical();
         GUILayout.Label(offer.Name, _body);
@@ -1042,11 +1062,29 @@ public sealed class BattlePassPanel
         GUILayout.Space(6f);
         GUILayout.Label(offer.Price.ToString("N0"), _header, GUILayout.Height(20f));
         GUILayout.FlexibleSpace();
+        int qty = BuyQuantity(offer, tickets);
+        int maxQty = MaxBuyQuantity(offer, tickets);
+        GUI.enabled = canBuy && maxQty > 1;
+        if (GUILayout.Button("−", _button, GUILayout.Width(28f), GUILayout.Height(32f)))
+        {
+            _buyQty[offer.Id ?? ""] = Math.Max(1, qty - 1);
+            SoundUtil.Play("ButtonClick", "TabButton");
+        }
+
+        GUI.enabled = true;
+        GUILayout.Label(qty.ToString(), _body, GUILayout.Width(22f), GUILayout.Height(32f));
+        GUI.enabled = canBuy && qty < maxQty;
+        if (GUILayout.Button("+", _button, GUILayout.Width(28f), GUILayout.Height(32f)))
+        {
+            _buyQty[offer.Id ?? ""] = Math.Min(maxQty, qty + 1);
+            SoundUtil.Play("ButtonClick", "TabButton");
+        }
+
         GUI.enabled = canBuy;
-        string buyLabel = soldOut ? "SOLD OUT" : "BUY";
+        string buyLabel = soldOut ? "SOLD OUT" : qty > 1 ? $"BUY {qty}" : "BUY";
         if (GUILayout.Button(buyLabel, soldOut ? _button : _btnBuy, GUILayout.Width(90f), GUILayout.Height(32f)))
         {
-            Plugin.Instance.BuyOffer(offer.Id);
+            Plugin.Instance.BuyOffer(offer.Id, qty);
         }
 
         GUI.enabled = true;
@@ -1188,12 +1226,126 @@ public sealed class BattlePassPanel
         GUI.FocusControl(null);
     }
 
-    private void DrawItemIcon(string tpl, float size, Color tint)
+    private int BuyQuantity(BattlePassShopOfferDto offer, int tickets)
+    {
+        int max = MaxBuyQuantity(offer, tickets);
+        if (max < 1)
+        {
+            return 1;
+        }
+
+        string id = offer.Id ?? "";
+        if (!_buyQty.TryGetValue(id, out int qty))
+        {
+            qty = 1;
+        }
+
+        return Math.Max(1, Math.Min(max, qty));
+    }
+
+    private static int MaxBuyQuantity(BattlePassShopOfferDto offer, int tickets)
+    {
+        if (offer == null || offer.Price < 0)
+        {
+            return 1;
+        }
+
+        int max = 10;
+        if (offer.StockRemaining != null)
+        {
+            max = Math.Min(max, Math.Max(0, offer.StockRemaining.Value));
+        }
+
+        if (offer.Price > 0)
+        {
+            max = Math.Min(max, tickets / offer.Price);
+        }
+
+        return Math.Max(0, max);
+    }
+
+    private void DrawCratePreview(CratePreviewDto preview, int tickets)
+    {
+        if (tickets <= 0)
+        {
+            GUILayout.Label("Spend or save tickets. Leftover tickets at month end become a crate.", _small);
+            return;
+        }
+
+        if (preview == null || preview.Items == null || preview.Items.Count == 0)
+        {
+            GUILayout.Label($"If the month ended now, {tickets} leftover tickets would become a {preview?.Grade ?? "crate"}.", _small);
+            return;
+        }
+
+        GUILayout.Space(8f);
+        GUILayout.BeginVertical(_cardStyle);
+        GUILayout.Label("IF THE MONTH ENDED NOW", _header);
+        GUILayout.Label($"{tickets} tickets → {preview.Grade}", _body);
+        GUILayout.Space(6f);
+        foreach (CratePreviewItemDto item in preview.Items)
+        {
+            GUILayout.BeginHorizontal();
+            if (!string.IsNullOrEmpty(item.Tpl))
+            {
+                DrawItemIcon(item.Tpl, 36f, Color.white, item.Name);
+                GUILayout.Space(8f);
+            }
+
+            string label = item.Count > 1 ? $"{item.Count}x {item.Name}" : item.Name;
+            if (item.Preset)
+            {
+                label += " (default build)";
+            }
+
+            GUILayout.Label(label, _small);
+            GUILayout.EndHorizontal();
+            GUILayout.Space(2f);
+        }
+
+        GUILayout.EndVertical();
+    }
+
+    private void DrawItemInspect()
+    {
+        if (string.IsNullOrEmpty(_hoverTpl) || Event.current == null)
+        {
+            return;
+        }
+
+        Vector2 mouse = Event.current.mousePosition;
+        float width = 260f;
+        float height = 88f;
+        float x = Mathf.Min(mouse.x + 18f, Screen.width - width - 12f);
+        float y = Mathf.Min(mouse.y + 18f, Screen.height - height - 12f);
+        var box = new Rect(x, y, width, height);
+        GUI.DrawTexture(box, _cardBg != null ? _cardBg : TarkovUi.PanelTex);
+        TarkovUi.Frame(box);
+        GUILayout.BeginArea(new Rect(box.x + 10f, box.y + 10f, box.width - 20f, box.height - 20f));
+        GUILayout.BeginHorizontal();
+        DrawItemIcon(_hoverTpl, 52f, Color.white);
+        GUILayout.Space(8f);
+        GUILayout.BeginVertical();
+        GUILayout.Label(string.IsNullOrEmpty(_hoverCaption) ? "Item" : _hoverCaption, _body);
+        GUILayout.Label("Hover inspect", _small);
+        GUILayout.EndVertical();
+        GUILayout.EndHorizontal();
+        GUILayout.EndArea();
+    }
+
+    private void DrawItemIcon(string tpl, float size, Color tint, string caption = null)
     {
         Rect area = GUILayoutUtility.GetRect(size, size, GUILayout.Width(size), GUILayout.Height(size));
         GUI.DrawTexture(area, _iconBg);
         BattlePassItemIcons.Request(tpl);
         Sprite sprite = BattlePassItemIcons.Get(tpl);
+        if (Event.current != null && area.Contains(Event.current.mousePosition) && !string.IsNullOrEmpty(tpl))
+        {
+            _hoverTpl = tpl;
+            _hoverCaption = caption;
+            _hoverMouse = Event.current.mousePosition;
+        }
+
         if (sprite != null)
         {
             BattlePassItemIcons.Draw(area, sprite, tint);
@@ -1222,6 +1374,22 @@ public sealed class BattlePassPanel
         foreach (BattlePassShopOfferDto offer in _status.Shop)
         {
             BattlePassItemIcons.Request(offer.Tpl);
+        }
+    }
+
+    private void PrefetchCratePreviewIcons()
+    {
+        if (_status?.CratePreview?.Items == null)
+        {
+            return;
+        }
+
+        foreach (CratePreviewItemDto item in _status.CratePreview.Items)
+        {
+            if (!string.IsNullOrEmpty(item.Tpl))
+            {
+                BattlePassItemIcons.Request(item.Tpl);
+            }
         }
     }
 
@@ -1257,6 +1425,7 @@ public sealed class BattlePassPanel
             "barter" => "BARTER",
             "cases" => "CASES",
             "weapons" => "WEAPONS",
+            "armor" => "ARMOR",
             "keys" => "KEYS",
             "rare" => "RARE",
             _ => category.ToUpperInvariant()
@@ -1274,9 +1443,10 @@ public sealed class BattlePassPanel
             "barter" => 4,
             "cases" => 5,
             "weapons" => 6,
-            "keys" => 7,
-            "rare" => 8,
-            _ => 9
+            "armor" => 7,
+            "keys" => 8,
+            "rare" => 9,
+            _ => 10
         };
     }
 

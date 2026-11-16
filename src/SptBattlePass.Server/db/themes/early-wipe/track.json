@@ -1,0 +1,12 @@
+[
+  { "level": 1, "xp": 50, "free": { "tickets": 1 }, "premium": { "name": "IFAK", "tpl": "590c678286f77426c9660122", "count": 1 } },
+  { "level": 2, "xp": 70, "free": { "name": "Aseptic bandage x4", "tpl": "544fb25a4bdc2dfb738b4567", "count": 4 }, "premium": { "name": "Factory emergency exit key", "tpl": "5448ba0b4bdc2d02308b456c", "count": 1 } },
+  { "level": 3, "xp": 80, "free": { "tickets": 1 }, "premium": { "name": "Analgin x2", "tpl": "544fb37f4bdc2dee738b4567", "count": 2 } },
+  { "level": 4, "xp": 100, "free": { "name": "5.45 PS x60", "tpl": "56dff3afd2720bba668b4567", "count": 60 }, "premium": { "name": "PM (default)", "tpl": "5448bd6b4bdc2dfc2f8b4569", "count": 1, "preset": true } },
+  { "level": 5, "xp": 120, "free": { "name": "Emergency water x3", "tpl": "60098b1705871270cd5352a1", "count": 3 }, "premium": { "name": "Dorm room 118 key", "tpl": "5672c92d4bdc2d180f8b4567", "count": 1 } },
+  { "level": 6, "xp": 140, "free": { "name": "IFAK", "tpl": "590c678286f77426c9660122", "count": 1 }, "premium": { "name": "SKS (default)", "tpl": "574d967124597745970e7c94", "count": 1, "preset": true } },
+  { "level": 7, "xp": 160, "free": { "name": "Bolts x10", "tpl": "57347c5b245977448d35f6e1", "count": 10 }, "premium": { "name": "Salewa", "tpl": "544fb45d4bdc2dee738b4568", "count": 1 } },
+  { "level": 8, "xp": 180, "free": { "tickets": 2 }, "premium": { "name": "PP-91 Kedr (default)", "tpl": "57d14d2524597714373db789", "count": 1, "preset": true } },
+  { "level": 9, "xp": 200, "free": { "name": "IFAK x2", "tpl": "590c678286f77426c9660122", "count": 2 }, "premium": { "name": "Dorm room 214 key", "tpl": "5780cf942459777df90dcb72", "count": 1 } },
+  { "level": 10, "xp": 250, "free": { "tickets": 4 }, "premium": { "name": "AKS-74U (default)", "tpl": "57dc2fa62459775949412633", "count": 1, "preset": true } }
+]

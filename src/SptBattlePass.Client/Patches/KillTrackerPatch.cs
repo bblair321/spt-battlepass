@@ -94,7 +94,8 @@ public sealed class KillTrackerPatch : ModulePatch
                 isHeadshot,
                 weaponClass,
                 isMelee,
-                isGrenade);
+                isGrenade,
+                role);
             if (FikaCompat.IsFikaLoaded)
             {
                 Plugin.Log.LogInfo(

@@ -13,6 +13,19 @@ public static class RaidProgress
     private static readonly Dictionary<string, int> WeaponScavs = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
     private static readonly Dictionary<string, int> WeaponPmcs = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
     private static readonly Dictionary<string, int> WeaponHeadshots = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+    private static readonly Dictionary<string, int> NamedBosses = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+    private static readonly Dictionary<string, string> ParentAliases = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    {
+        ["meds"] = "543be5664bdc2dd4348b4569",
+        ["medkit"] = "5448f39d4bdc2d0a728b4568",
+        ["medikit"] = "5448f39d4bdc2d0a728b4568",
+        ["drugs"] = "5448f3a14bdc2d27728b4569",
+        ["barter"] = "5448eb774bdc2d0a728b4567",
+        ["electronics"] = "57864a66245977548f04a81f",
+        ["building"] = "57864ada245977548638de91",
+        ["info"] = "5448ecbe4bdc2d60728b4568"
+    };
 
     public static bool Active { get; private set; }
     public static string RaidId { get; private set; } = "";
@@ -29,6 +42,7 @@ public static class RaidProgress
     public static int PmcHeadshots { get; private set; }
     public static int MeleeKills { get; private set; }
     public static int GrenadeKills { get; private set; }
+    public static string ExtractName { get; private set; } = "";
 
     public static void Start(string location, bool isScavRaid, bool isNight)
     {
@@ -51,6 +65,13 @@ public static class RaidProgress
         WeaponScavs.Clear();
         WeaponPmcs.Clear();
         WeaponHeadshots.Clear();
+        NamedBosses.Clear();
+        ExtractName = "";
+    }
+
+    public static void SetExtract(string extract)
+    {
+        ExtractName = extract ?? "";
     }
 
     public static void RegisterKill(
@@ -63,7 +84,8 @@ public static class RaidProgress
         bool isHeadshot,
         string weaponClass,
         bool isMelee,
-        bool isGrenade)
+        bool isGrenade,
+        string role = "")
     {
         if (!Active)
         {
@@ -73,6 +95,10 @@ public static class RaidProgress
         if (isBoss)
         {
             BossKills++;
+            if (!string.IsNullOrWhiteSpace(role))
+            {
+                Add(NamedBosses, role.Trim());
+            }
         }
         else if (isRaider)
         {
@@ -153,6 +179,8 @@ public static class RaidProgress
 
     public static Dictionary<string, int> CopyFirItems() => CountFirItems();
 
+    public static Dictionary<string, int> CopyNamedBosses() => Copy(NamedBosses);
+
     public static void End()
     {
         Active = false;
@@ -171,6 +199,7 @@ public static class RaidProgress
             "KillScavs" => ScavKills,
             "KillPmcs" => PmcKills,
             "KillBosses" => BossKills,
+            "KillBoss" => NamedBossDelta(challenge.Boss),
             "KillRaiders" => RaiderKills,
             "KillRogues" => RogueKills,
             "KillCultists" => CultistKills,
@@ -186,6 +215,7 @@ public static class RaidProgress
             "KillPmcsWeapon" => Count(WeaponPmcs, challenge.Weapon),
             "HeadshotWeapon" => Count(WeaponHeadshots, challenge.Weapon),
             "FindInRaid" => Count(CountFirItems(), challenge.Tpl),
+            "FindInRaidCategory" => CountFirByParent(challenge.Parent),
             _ => 0
         };
     }
@@ -204,12 +234,12 @@ public static class RaidProgress
 
         return challenge.Type switch
         {
-            "KillScavs" or "KillPmcs" or "KillBosses" or "KillRaiders" or "KillRogues"
+            "KillScavs" or "KillPmcs" or "KillBosses" or "KillBoss" or "KillRaiders" or "KillRogues"
                 or "KillCultists" or "Headshots" or "HeadshotPmcs"
                 or "Survive" or "SurviveCount"
                 or "KillWeapon" or "KillScavsWeapon" or "KillPmcsWeapon"
                 or "KillMelee" or "KillGrenade" or "HeadshotWeapon"
-                or "FindInRaid" => true,
+                or "FindInRaid" or "FindInRaidCategory" or "ExtractNamed" => true,
             "SurvivePmc" => !IsScavRaid,
             "SurviveDay" => !IsNight,
             "SurviveNight" => IsNight,
@@ -255,6 +285,120 @@ public static class RaidProgress
 
         bool wantNight = timeOfDay.Equals("night", StringComparison.OrdinalIgnoreCase);
         return wantNight == IsNight;
+    }
+
+    private static int NamedBossDelta(string required)
+    {
+        if (string.IsNullOrWhiteSpace(required))
+        {
+            return 0;
+        }
+
+        int total = 0;
+        foreach (KeyValuePair<string, int> pair in NamedBosses)
+        {
+            if (BossMatches(pair.Key, required))
+            {
+                total += pair.Value;
+            }
+        }
+
+        return total;
+    }
+
+    private static bool BossMatches(string role, string required)
+    {
+        string have = NormalizeBoss(role);
+        string want = NormalizeBoss(required);
+        return have.Length > 0 && want.Length > 0 && (have == want || have.IndexOf(want, StringComparison.Ordinal) >= 0 || want.IndexOf(have, StringComparison.Ordinal) >= 0);
+    }
+
+    private static string NormalizeBoss(string role)
+    {
+        string value = (role ?? "").Trim().ToLowerInvariant();
+        if (value.StartsWith("boss", StringComparison.Ordinal))
+        {
+            value = value.Substring(4);
+        }
+
+        return value.Trim();
+    }
+
+    private static int CountFirByParent(string parent)
+    {
+        string want = ResolveParent(parent);
+        if (!Active || want.Length == 0)
+        {
+            return 0;
+        }
+
+        int total = 0;
+        try
+        {
+            GameWorld world = Singleton<GameWorld>.Instance;
+            Player player = world != null ? world.MainPlayer : null;
+            Inventory inventory = player?.InventoryController?.Inventory;
+            if (inventory == null)
+            {
+                return 0;
+            }
+
+            foreach (Item item in inventory.GetPlayerItems(EPlayerItems.Equipment))
+            {
+                if (item == null || !item.SpawnedInSession)
+                {
+                    continue;
+                }
+
+                if (!ItemMatchesParent(item, want))
+                {
+                    continue;
+                }
+
+                total += item.StackObjectsCount > 0 ? item.StackObjectsCount : 1;
+            }
+        }
+        catch
+        {
+        }
+
+        return total;
+    }
+
+    private static string ResolveParent(string value)
+    {
+        string key = (value ?? "").Trim();
+        if (key.Length == 0)
+        {
+            return "";
+        }
+
+        return ParentAliases.TryGetValue(key, out string tpl) ? tpl : key;
+    }
+
+    private static bool ItemMatchesParent(Item item, string want)
+    {
+        string tpl = item.StringTemplateId;
+        if (string.Equals(tpl, want, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        try
+        {
+            object template = item.GetType().GetProperty("Template")?.GetValue(item);
+            object parent = template == null
+                ? null
+                : template.GetType().GetProperty("_parent")?.GetValue(template)
+                  ?? template.GetType().GetProperty("Parent")?.GetValue(template)
+                  ?? template.GetType().GetField("_parent", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic)?.GetValue(template);
+            string parentId = parent?.ToString() ?? "";
+            return parentId.Equals(want, StringComparison.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     private static Dictionary<string, int> CountFirItems()
